@@ -1,7 +1,9 @@
 "use client";
 
 import React from "react";
-import { Building2, Phone, Mail, MapPin, ShieldCheck, Heart } from "../icons/Icons";
+import { Building2, Phone, Mail, MapPin, ShieldCheck, Heart, Sparkles, ArrowRight } from "../icons/Icons";
+import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
 
 interface FooterProps {
   onOpenProviderModal: () => void;
@@ -31,15 +33,16 @@ export const Footer: React.FC<FooterProps> = ({ onOpenProviderModal, onOpenAuthM
               Connecting people with trusted local services & neighborhood micro-businesses. Designed with quality verification, transparent pricing, and instant booking.
             </p>
 
-            <div className="pt-2 flex items-center gap-3 text-xs text-slate-300">
-              <div className="flex items-center gap-1.5 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">
-                <ShieldCheck size={16} className="text-emerald-400" />
-                <span>Verified Providers</span>
-              </div>
-              <div className="flex items-center gap-1.5 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">
-                <MapPin size={16} className="text-blue-400" />
-                <span>Hyperlocal Matching</span>
-              </div>
+            {/* Shadcn Badges */}
+            <div className="pt-2 flex flex-wrap items-center gap-2.5">
+              <Badge variant="emerald" className="px-3 py-1 text-xs gap-1.5 font-semibold">
+                <ShieldCheck size={14} className="text-emerald-400" />
+                Verified Providers
+              </Badge>
+              <Badge variant="outline" className="px-3 py-1 text-xs gap-1.5 font-semibold border-slate-800 bg-slate-900/80 text-slate-300">
+                <MapPin size={14} className="text-blue-400" />
+                Hyperlocal Matching
+              </Badge>
             </div>
           </div>
 
@@ -77,42 +80,51 @@ export const Footer: React.FC<FooterProps> = ({ onOpenProviderModal, onOpenAuthM
             </ul>
           </div>
 
-          {/* Column 3: For Providers */}
+          {/* Column 3: For Providers (Using Shadcn Buttons and Badges) */}
           <div className="space-y-3">
-            <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-200">
-              For Providers
-            </h4>
-            <ul className="space-y-2 text-xs">
-              <li>
-                <button
-                  onClick={onOpenProviderModal}
-                  className="hover:text-emerald-400 transition-colors text-left cursor-pointer font-semibold text-emerald-400/90"
-                >
-                  Join as Provider
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={onOpenAuthModal}
-                  className="hover:text-blue-400 transition-colors text-left cursor-pointer"
-                >
-                  Provider Login
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={onOpenProviderModal}
-                  className="hover:text-blue-400 transition-colors text-left cursor-pointer"
-                >
-                  Provider Dashboard
-                </button>
-              </li>
-              <li>
-                <a href="#services" className="hover:text-blue-400 transition-colors">
-                  Partner Pricing & Plans
-                </a>
-              </li>
-            </ul>
+            <div className="flex items-center gap-2">
+              <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-200">
+                For Providers
+              </h4>
+              <Badge variant="emerald" className="text-[10px] px-1.5 py-0">Partner</Badge>
+            </div>
+
+            <div className="pt-1 space-y-2.5">
+              <Button
+                variant="emerald"
+                size="sm"
+                onClick={onOpenProviderModal}
+                className="w-full justify-start gap-2 font-semibold shadow-xs"
+              >
+                <Sparkles size={14} />
+                Join as Provider
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onOpenAuthModal}
+                className="w-full justify-start gap-2 text-xs border-slate-800 bg-slate-900/60 text-slate-300 hover:bg-slate-800 hover:text-white"
+              >
+                Provider Login
+              </Button>
+
+              <ul className="space-y-2 text-xs pt-1">
+                <li>
+                  <button
+                    onClick={onOpenProviderModal}
+                    className="hover:text-blue-400 transition-colors text-left cursor-pointer"
+                  >
+                    Provider Dashboard
+                  </button>
+                </li>
+                <li>
+                  <a href="#services" className="hover:text-blue-400 transition-colors">
+                    Partner Pricing & Plans
+                  </a>
+                </li>
+              </ul>
+            </div>
           </div>
 
           {/* Column 4: Support & Contact */}
@@ -163,3 +175,4 @@ export const Footer: React.FC<FooterProps> = ({ onOpenProviderModal, onOpenAuthM
     </footer>
   );
 };
+

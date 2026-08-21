@@ -2,6 +2,9 @@
 
 import React, { useState } from "react";
 import { Search, MapPin, ShieldCheck, CheckCircle2, Star, Users, Award, ChevronRight } from "../icons/Icons";
+import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
+import { Card } from "../ui/card";
 
 interface HeroSectionProps {
   searchQuery: string;
@@ -44,12 +47,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           <div className="lg:col-span-7 space-y-6 sm:space-y-8">
             
             {/* Pill Badge */}
-            <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-200/80 rounded-full px-3.5 py-1.5 shadow-2xs">
+            <Badge variant="secondary" className="bg-blue-50 border border-blue-200/80 text-blue-700 font-semibold tracking-wide uppercase px-3.5 py-1.5 rounded-full gap-2 shadow-2xs">
               <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
-              <span className="text-xs font-semibold text-blue-700 tracking-wide uppercase">
-                India's Preferred Local Discovery Hub
-              </span>
-            </div>
+              <span>India's Preferred Local Discovery Hub</span>
+            </Badge>
 
             {/* Main Headline */}
             <div className="space-y-3">
@@ -62,32 +63,36 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             </div>
 
             {/* Dual Search Box Card */}
-            <div className="bg-white rounded-2xl p-3 sm:p-4 shadow-xl shadow-slate-900/5 border border-slate-200/90 transition-all">
+            <Card className="p-3 sm:p-4 shadow-xl shadow-slate-900/5 border-slate-200/90 rounded-2xl">
               
               {/* Type Switcher Tabs */}
               <div className="flex items-center gap-2 mb-3 border-b border-slate-100 pb-2.5 px-1">
-                <button
+                <Button
                   type="button"
+                  variant={activeTab === "services" ? "default" : "ghost"}
+                  size="xs"
                   onClick={() => setActiveTab("services")}
-                  className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                  className={`font-bold rounded-lg cursor-pointer ${
                     activeTab === "services"
                       ? "bg-slate-900 text-white"
                       : "text-slate-500 hover:text-slate-900"
                   }`}
                 >
                   Search Services
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant={activeTab === "businesses" ? "default" : "ghost"}
+                  size="xs"
                   onClick={() => setActiveTab("businesses")}
-                  className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                  className={`font-bold rounded-lg cursor-pointer ${
                     activeTab === "businesses"
                       ? "bg-slate-900 text-white"
                       : "text-slate-500 hover:text-slate-900"
                   }`}
                 >
                   Explore Businesses
-                </button>
+                </Button>
               </div>
 
               {/* Form Input Container */}
@@ -122,29 +127,31 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 </div>
 
                 {/* Submit Button */}
-                <button
+                <Button
                   type="submit"
-                  className="w-full md:w-auto px-7 py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-semibold rounded-xl shadow-md shadow-blue-600/20 hover:shadow-lg transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+                  size="lg"
+                  className="w-full md:w-auto px-7 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow-md shadow-blue-600/20 gap-2 shrink-0"
                 >
                   <Search size={18} />
                   <span>Search</span>
-                </button>
+                </Button>
               </form>
 
               {/* Popular Tags */}
               <div className="mt-3.5 pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2 text-xs">
                 <span className="font-semibold text-slate-500">Popular:</span>
                 {popularTags.map((tag) => (
-                  <button
+                  <Badge
                     key={tag.slug}
+                    variant="secondary"
                     onClick={() => onQuickCategoryClick(tag.slug)}
-                    className="px-2.5 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-700 rounded-md font-medium transition-colors cursor-pointer"
+                    className="bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-700 rounded-md font-medium cursor-pointer transition-colors px-2.5 py-1"
                   >
                     {tag.label}
-                  </button>
+                  </Badge>
                 ))}
               </div>
-            </div>
+            </Card>
 
             {/* Trust Indicators Bar */}
             <div className="pt-2 grid grid-cols-3 gap-4 sm:gap-6 border-t border-slate-200/60">
@@ -197,9 +204,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 {/* Overlaid Image Text */}
                 <div className="absolute bottom-6 left-6 right-6 text-white space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="bg-emerald-500 text-white text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded">
+                    <Badge variant="emerald" className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5">
                       Available Near You
-                    </span>
+                    </Badge>
                     <span className="text-xs text-slate-300 font-medium">• Jaipur & 7 Cities</span>
                   </div>
                   <h3 className="text-xl font-bold">Sharma Electricals & Solar Solutions</h3>
@@ -237,3 +244,4 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     </section>
   );
 };
+
