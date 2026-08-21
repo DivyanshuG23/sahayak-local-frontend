@@ -2,6 +2,9 @@
 
 import React from "react";
 import { Building2, ShieldCheck, UserCheck, ArrowRight, CheckCircle2 } from "../icons/Icons";
+import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
+import { Card } from "../ui/card";
 
 interface ProviderCTAProps {
   onOpenProviderModal: () => void;
@@ -20,12 +23,10 @@ export const ProviderCTA: React.FC<ProviderCTAProps> = ({ onOpenProviderModal })
           
           {/* Left Text & CTA Buttons */}
           <div className="lg:col-span-7 space-y-6">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20">
+            <Badge variant="outline" className="bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-full border-white/20 text-blue-100 gap-2 font-bold uppercase tracking-wider text-xs">
               <Building2 size={16} className="text-emerald-400" />
-              <span className="text-xs font-bold uppercase tracking-wider text-blue-100">
-                For Service Professionals & Local Stores
-              </span>
-            </div>
+              <span>For Service Professionals & Local Stores</span>
+            </Badge>
 
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight">
               Grow Your Local Business with <span className="text-blue-300">Sahayak-Local</span>
@@ -57,27 +58,31 @@ export const ProviderCTA: React.FC<ProviderCTAProps> = ({ onOpenProviderModal })
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-4">
-              <button
+              <Button
+                variant="emerald"
+                size="lg"
                 onClick={onOpenProviderModal}
-                className="px-7 py-3.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-slate-950 font-extrabold text-sm rounded-xl shadow-lg shadow-emerald-500/20 hover:shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="px-7 py-3.5 text-slate-950 font-extrabold text-sm rounded-xl gap-2 shadow-lg shadow-emerald-500/20"
               >
                 <UserCheck size={18} />
                 <span>Join as a Provider</span>
-              </button>
+              </Button>
 
-              <a
-                href="#how-it-works"
-                className="px-6 py-3.5 bg-white/10 hover:bg-white/20 text-white font-semibold text-sm rounded-xl backdrop-blur-md border border-white/20 transition-all flex items-center justify-center gap-2"
+              <Button
+                render={<a href="#how-it-works" />}
+                variant="outline"
+                size="lg"
+                className="px-6 py-3.5 bg-white/10 hover:bg-white/20 text-white font-semibold text-sm rounded-xl backdrop-blur-md border-white/20 gap-2"
               >
                 <span>Learn More</span>
                 <ArrowRight size={16} />
-              </a>
+              </Button>
             </div>
           </div>
 
           {/* Right Provider Card Graphic */}
           <div className="lg:col-span-5">
-            <div className="bg-white/10 backdrop-blur-md p-6 sm:p-8 rounded-3xl border border-white/20 shadow-2xl space-y-6">
+            <Card className="bg-white/10 backdrop-blur-md p-6 sm:p-8 rounded-3xl border-white/20 shadow-2xl space-y-6">
               
               <div className="flex items-center justify-between border-b border-white/10 pb-4">
                 <div className="flex items-center gap-3">
@@ -89,9 +94,9 @@ export const ProviderCTA: React.FC<ProviderCTAProps> = ({ onOpenProviderModal })
                     <p className="text-xs text-blue-200">Real-time Lead Notifications</p>
                   </div>
                 </div>
-                <span className="bg-emerald-500/20 text-emerald-300 text-[10px] uppercase font-bold px-2.5 py-1 rounded-full border border-emerald-400/30">
+                <Badge variant="emerald" className="text-[10px] uppercase font-bold px-2.5 py-1">
                   Live System
-                </span>
+                </Badge>
               </div>
 
               {/* Sample Incoming Request Notification */}
@@ -119,7 +124,7 @@ export const ProviderCTA: React.FC<ProviderCTAProps> = ({ onOpenProviderModal })
                 </div>
               </div>
 
-            </div>
+            </Card>
           </div>
 
         </div>
@@ -127,3 +132,4 @@ export const ProviderCTA: React.FC<ProviderCTAProps> = ({ onOpenProviderModal })
     </section>
   );
 };
+

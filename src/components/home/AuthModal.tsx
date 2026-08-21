@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, UserCheck, CheckCircle2, Building2 } from "../icons/Icons";
+import { X, UserCheck, CheckCircle2, Building2, ShieldCheck, Sparkles } from "../icons/Icons";
+import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -45,27 +47,33 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold">
-              <Building2 size={20} />
+            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold shadow-md shadow-blue-500/20">
+              <Building2 size={22} />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900">
-                {isSignUp ? "Create Account" : "User & Provider Login"}
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold text-slate-900">
+                  {isSignUp ? "Create Account" : "User & Provider Login"}
+                </h2>
+                <Badge variant="emerald" className="text-[10px] px-1.5 py-0">Secure</Badge>
+              </div>
               <p className="text-xs text-slate-500">Access bookings & local directory</p>
             </div>
           </div>
 
-          <button
+          <Button
+            variant="ghost"
+            size="icon-sm"
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-600 rounded-full cursor-pointer"
+            aria-label="Close modal"
+            className="text-slate-400 hover:text-slate-600 rounded-full"
           >
-            <X size={20} />
-          </button>
+            <X size={18} />
+          </Button>
         </div>
 
         {loggedIn ? (
-          <div className="bg-blue-600 text-white p-6 rounded-2xl text-center space-y-2 animate-in zoom-in-95">
+          <div className="bg-blue-600 text-white p-6 rounded-2xl text-center space-y-3 animate-in zoom-in-95 shadow-lg shadow-blue-500/20">
             <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mx-auto">
               <CheckCircle2 size={28} />
             </div>
@@ -100,29 +108,34 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
               />
             </div>
 
-            <button
+            <Button
               type="submit"
-              className="w-full py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold rounded-xl shadow-md cursor-pointer transition-all flex items-center justify-center gap-2"
+              size="lg"
+              className="w-full h-11 bg-blue-600 hover:bg-blue-700 font-bold rounded-xl shadow-md gap-2"
             >
               <UserCheck size={16} />
               <span>Get OTP Verification Code</span>
-            </button>
+            </Button>
 
-            <div className="text-center text-xs text-slate-500 pt-2">
-              {isSignUp ? "Already have an account?" : "New to Sahayak-Local?"}{" "}
-              <button
+            <div className="text-center text-xs text-slate-500 pt-2 flex items-center justify-center gap-1">
+              <span>{isSignUp ? "Already have an account?" : "New to Sahayak-Local?"}</span>
+              <Button
                 type="button"
+                variant="link"
                 onClick={() => setIsSignUp(!isSignUp)}
-                className="text-blue-600 font-bold underline cursor-pointer"
+                className="p-0 h-auto text-xs font-bold text-blue-600 underline"
               >
                 {isSignUp ? "Login here" : "Create an Account"}
-              </button>
+              </Button>
             </div>
           </form>
         ) : (
           <form onSubmit={handleVerifyOtp} className="space-y-4">
-            <div className="bg-blue-50 p-3 rounded-xl border border-blue-100 text-xs text-slate-700">
-              OTP code sent to <strong>{mobile}</strong>. (Use <strong>1234</strong> for demo)
+            <div className="bg-blue-50 p-3 rounded-xl border border-blue-100 text-xs text-slate-700 flex items-start gap-2">
+              <ShieldCheck size={16} className="text-blue-600 shrink-0 mt-0.5" />
+              <div>
+                OTP code sent to <strong>{mobile}</strong>. (Use <strong>1234</strong> for demo)
+              </div>
             </div>
 
             <div>
@@ -138,12 +151,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
               />
             </div>
 
-            <button
+            <Button
               type="submit"
-              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md cursor-pointer transition-all"
+              size="lg"
+              className="w-full h-11 bg-blue-600 hover:bg-blue-700 font-bold rounded-xl shadow-md gap-2"
             >
-              Verify OTP & Sign In
-            </button>
+              <CheckCircle2 size={16} />
+              <span>Verify OTP & Sign In</span>
+            </Button>
           </form>
         )}
 
@@ -151,3 +166,4 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
     </div>
   );
 };
+

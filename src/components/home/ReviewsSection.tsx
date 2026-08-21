@@ -3,6 +3,8 @@
 import React from "react";
 import { REVIEWS } from "../../data/mockData";
 import { Star, ShieldCheck, Quote } from "../icons/Icons";
+import { Card, CardContent } from "../ui/card";
+import { Badge } from "../ui/badge";
 
 export const ReviewsSection: React.FC = () => {
   return (
@@ -11,9 +13,9 @@ export const ReviewsSection: React.FC = () => {
         
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto space-y-3">
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 uppercase tracking-wider bg-amber-50 px-3.5 py-1 rounded-full border border-amber-200/60">
+          <Badge variant="outline" className="text-amber-700 bg-amber-50 border-amber-200/60 font-bold uppercase tracking-wider text-xs px-3.5 py-1">
             Real Customer Experience
-          </div>
+          </Badge>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
             What Our Customers Say
           </h2>
@@ -25,9 +27,9 @@ export const ReviewsSection: React.FC = () => {
         {/* 3 Testimonial Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
           {REVIEWS.map((rev) => (
-            <div
+            <Card
               key={rev.id}
-              className="bg-white rounded-2xl p-7 border border-slate-200/90 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between relative group"
+              className="p-7 rounded-2xl border-slate-200/90 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between relative group"
             >
               <div className="space-y-4">
                 {/* Rating stars & verified badge */}
@@ -39,10 +41,10 @@ export const ReviewsSection: React.FC = () => {
                   </div>
 
                   {rev.verifiedBooking && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/60">
+                    <Badge variant="emerald" className="text-[10px] gap-1 px-2.5 py-0.5 font-bold">
                       <ShieldCheck size={12} />
                       Verified Booking
-                    </span>
+                    </Badge>
                   )}
                 </div>
 
@@ -70,7 +72,7 @@ export const ReviewsSection: React.FC = () => {
                 </div>
                 <span className="ml-auto text-[11px] text-slate-400">{rev.date}</span>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
 
@@ -78,3 +80,4 @@ export const ReviewsSection: React.FC = () => {
     </section>
   );
 };
+

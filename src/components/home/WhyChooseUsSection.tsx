@@ -3,6 +3,8 @@
 import React from "react";
 import { WHY_CHOOSE_US } from "../../data/mockData";
 import { ShieldCheck, MapPin, Star, CheckCircle2 } from "../icons/Icons";
+import { Card, CardContent } from "../ui/card";
+import { Badge } from "../ui/badge";
 
 const getFeatureIcon = (iconName: string) => {
   switch (iconName) {
@@ -26,9 +28,9 @@ export const WhyChooseUsSection: React.FC = () => {
         
         {/* Section Title */}
         <div className="text-center max-w-2xl mx-auto space-y-3">
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 uppercase tracking-wider bg-emerald-50 px-3.5 py-1 rounded-full border border-emerald-200/60">
+          <Badge variant="emerald" className="px-3.5 py-1 text-xs font-bold uppercase tracking-wider">
             Why Choose Sahayak-Local
-          </div>
+          </Badge>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
             Built for Neighborhood Trust & Transparency
           </h2>
@@ -40,9 +42,9 @@ export const WhyChooseUsSection: React.FC = () => {
         {/* 4 Feature Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
           {WHY_CHOOSE_US.map((feature) => (
-            <div
+            <Card
               key={feature.id}
-              className="bg-white rounded-2xl p-7 border border-slate-200/90 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group"
+              className="p-7 rounded-2xl border-slate-200/90 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group"
             >
               <div className="space-y-4">
                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border ${feature.color} group-hover:scale-110 transition-transform duration-300`}>
@@ -60,16 +62,16 @@ export const WhyChooseUsSection: React.FC = () => {
                 <span>Verified Quality</span>
                 <span className="text-emerald-600">✓ Guaranteed</span>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
 
         {/* B.Tech Project Showcase Callout Ribbon */}
         <div className="bg-gradient-to-r from-blue-900 via-slate-900 to-slate-900 text-white rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl border border-slate-800">
           <div className="space-y-2 text-center md:text-left">
-            <span className="bg-blue-500/20 text-blue-300 text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full border border-blue-400/30">
+            <Badge variant="outline" className="bg-blue-500/20 text-blue-300 text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 border-blue-400/30">
               Local Hyperlocal Platform Architecture
-            </span>
+            </Badge>
             <h3 className="text-xl font-bold">Solving Local Services Discovery in Tier 2 & Tier 3 Cities</h3>
             <p className="text-xs text-slate-300 max-w-xl">
               Sahayak-Local bridges the gap between skilled unorganized technicians and urban households through real-time geolocation matching and transparent peer reviews.
@@ -92,3 +94,4 @@ export const WhyChooseUsSection: React.FC = () => {
     </section>
   );
 };
+

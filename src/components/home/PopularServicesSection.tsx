@@ -12,6 +12,9 @@ import {
   Filter,
   CheckCircle2
 } from "../icons/Icons";
+import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
+import { Card } from "../ui/card";
 
 interface PopularServicesSectionProps {
   services: ServiceProvider[];
@@ -45,9 +48,9 @@ export const PopularServicesSection: React.FC<PopularServicesSectionProps> = ({
         {/* Section Title Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 uppercase tracking-wider bg-emerald-50 px-3 py-1 rounded-full w-fit">
+            <Badge variant="emerald" className="px-3 py-1 text-xs font-bold uppercase tracking-wider">
               Featured Local Businesses
-            </div>
+            </Badge>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
               Popular Services Near You
             </h2>
@@ -58,53 +61,51 @@ export const PopularServicesSection: React.FC<PopularServicesSectionProps> = ({
 
           {/* Quick Toggle for Available Today */}
           <div className="flex items-center gap-3">
-            <button
+            <Button
+              variant={availabilityFilter ? "emerald" : "outline"}
+              size="sm"
               onClick={() => setAvailabilityFilter(!availabilityFilter)}
-              className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
-                availabilityFilter
-                  ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
-                  : "bg-white text-slate-700 border-slate-200 hover:border-emerald-500"
-              }`}
+              className="gap-2 text-xs font-semibold rounded-xl"
             >
               <Clock size={15} />
               <span>Available Today Only</span>
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* Filter Category Tabs */}
         <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-          <button
+          <Button
+            variant={selectedCategory === null ? "default" : "outline"}
+            size="sm"
             onClick={() => onSelectCategoryFilter(null)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-              selectedCategory === null
-                ? "bg-slate-900 text-white shadow-md"
-                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80"
+            className={`rounded-xl text-xs font-bold whitespace-nowrap ${
+              selectedCategory === null ? "bg-slate-900 text-white" : "bg-white text-slate-600"
             }`}
           >
             All Services ({services.length})
-          </button>
+          </Button>
           {CATEGORIES.map((cat) => {
             const isSelected = selectedCategory === cat.slug;
             return (
-              <button
+              <Button
                 key={cat.id}
+                variant={isSelected ? "default" : "outline"}
+                size="sm"
                 onClick={() => onSelectCategoryFilter(isSelected ? null : cat.slug)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                  isSelected
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
-                    : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80"
+                className={`rounded-xl text-xs font-bold whitespace-nowrap ${
+                  isSelected ? "bg-blue-600 text-white" : "bg-white text-slate-600"
                 }`}
               >
                 {cat.name}
-              </button>
+              </Button>
             );
           })}
         </div>
 
         {/* Empty State */}
         {filteredServices.length === 0 && (
-          <div className="bg-white rounded-2xl p-12 text-center border border-slate-200 max-w-md mx-auto space-y-4">
+          <Card className="p-12 text-center max-w-md mx-auto space-y-4 rounded-2xl">
             <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
               <Filter size={24} />
             </div>
@@ -112,7 +113,7 @@ export const PopularServicesSection: React.FC<PopularServicesSectionProps> = ({
             <p className="text-xs text-slate-500">
               Try clearing your category filter or availability search toggle to explore all local providers.
             </p>
-            <button
+            <Button
               onClick={() => {
                 onSelectCategoryFilter(null);
                 setAvailabilityFilter(false);
@@ -120,8 +121,8 @@ export const PopularServicesSection: React.FC<PopularServicesSectionProps> = ({
               className="px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg"
             >
               Reset Filters
-            </button>
-          </div>
+            </Button>
+          </Card>
         )}
 
         {/* Service Cards Grid */}
@@ -129,9 +130,9 @@ export const PopularServicesSection: React.FC<PopularServicesSectionProps> = ({
           {filteredServices.map((provider) => {
             const isFav = favorites.includes(provider.id);
             return (
-              <div
+              <Card
                 key={provider.id}
-                className="group bg-white rounded-2xl overflow-hidden border border-slate-200/80 shadow-xs hover:shadow-xl hover:border-blue-200 transition-all duration-300 flex flex-col justify-between"
+                className="group p-0 rounded-2xl overflow-hidden border-slate-200/80 shadow-xs hover:shadow-xl hover:border-blue-200 transition-all duration-300 flex flex-col justify-between"
               >
                 {/* Top Image Banner */}
                 <div className="relative h-48 sm:h-52 overflow-hidden bg-slate-100">
@@ -145,25 +146,27 @@ export const PopularServicesSection: React.FC<PopularServicesSectionProps> = ({
                   {/* Top Badges overlay */}
                   <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 items-center z-10">
                     {provider.verified && (
-                      <span className="inline-flex items-center gap-1 bg-emerald-600/90 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-xs">
+                      <Badge variant="emerald" className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 gap-1">
                         <ShieldCheck size={12} />
                         Verified
-                      </span>
+                      </Badge>
                     )}
                     {provider.badgeText && (
-                      <span className="bg-slate-900/90 backdrop-blur-md text-blue-300 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
+                      <Badge variant="secondary" className="bg-slate-900/90 backdrop-blur-md text-blue-300 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1">
                         {provider.badgeText}
-                      </span>
+                      </Badge>
                     )}
                   </div>
 
                   {/* Favorite Toggle Button */}
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
                     onClick={(e) => {
                       e.stopPropagation();
                       onToggleFavorite(provider.id);
                     }}
-                    className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-md transition-all cursor-pointer z-10 ${
+                    className={`absolute top-3 right-3 rounded-full backdrop-blur-md transition-all z-10 ${
                       isFav
                         ? "bg-rose-500 text-white shadow-md scale-110"
                         : "bg-white/80 text-slate-600 hover:bg-white hover:text-rose-500"
@@ -171,13 +174,13 @@ export const PopularServicesSection: React.FC<PopularServicesSectionProps> = ({
                     aria-label="Add to favorites"
                   >
                     <Heart size={18} fill={isFav ? "currentColor" : "none"} />
-                  </button>
+                  </Button>
 
                   {/* Category Pill on Image */}
                   <div className="absolute bottom-3 left-3 z-10">
-                    <span className="bg-white/95 text-slate-800 text-xs font-semibold px-2.5 py-1 rounded-lg border border-slate-200">
+                    <Badge variant="outline" className="bg-white/95 text-slate-800 text-xs font-semibold px-2.5 py-1 rounded-lg">
                       {provider.category}
-                    </span>
+                    </Badge>
                   </div>
 
                   {/* Distance Pill */}
@@ -195,11 +198,11 @@ export const PopularServicesSection: React.FC<PopularServicesSectionProps> = ({
                       <h3 className="text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
                         {provider.name}
                       </h3>
-                      <div className="flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/80 shrink-0">
+                      <Badge variant="outline" className="flex items-center gap-1 bg-amber-50 border-amber-200/80 px-2 py-0.5 shrink-0">
                         <Star size={13} className="text-amber-500 fill-amber-500" />
                         <span className="text-xs font-bold text-slate-900">{provider.rating}</span>
                         <span className="text-[11px] text-slate-500">({provider.reviewCount})</span>
-                      </div>
+                      </Badge>
                     </div>
 
                     {/* Owner & Locality info */}
@@ -233,13 +236,13 @@ export const PopularServicesSection: React.FC<PopularServicesSectionProps> = ({
                     </div>
 
                     {/* View Details Modal Trigger */}
-                    <button
+                    <Button
                       onClick={() => onSelectProvider(provider)}
-                      className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold rounded-xl shadow-xs hover:shadow transition-all flex items-center gap-1 cursor-pointer"
+                      className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl gap-1"
                     >
                       <span>View Details</span>
                       <ChevronRight size={14} />
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
@@ -261,7 +264,7 @@ export const PopularServicesSection: React.FC<PopularServicesSectionProps> = ({
                   </div>
                   <span className="text-slate-500 font-normal">Responds {provider.responseTime}</span>
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
@@ -270,3 +273,4 @@ export const PopularServicesSection: React.FC<PopularServicesSectionProps> = ({
     </section>
   );
 };
+

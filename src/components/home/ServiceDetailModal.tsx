@@ -13,6 +13,8 @@ import {
   Calendar,
   UserCheck
 } from "../icons/Icons";
+import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
 
 interface ServiceDetailModalProps {
   provider: ServiceProvider | null;
@@ -63,24 +65,26 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent" />
 
           {/* Close Button */}
-          <button
+          <Button
+            variant="ghost"
+            size="icon-sm"
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 bg-slate-900/80 hover:bg-slate-900 text-white rounded-full transition-colors cursor-pointer"
             aria-label="Close modal"
+            className="absolute top-4 right-4 bg-slate-900/80 hover:bg-slate-900 text-white rounded-full border-none"
           >
-            <X size={20} />
-          </button>
+            <X size={18} />
+          </Button>
 
           {/* Title overlay */}
           <div className="absolute bottom-4 left-6 right-6 text-white space-y-1">
             <div className="flex items-center gap-2">
-              <span className="bg-blue-600 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded">
+              <Badge variant="secondary" className="bg-blue-600 text-white text-[10px] uppercase font-bold px-2 py-0.5 border-none">
                 {provider.category}
-              </span>
+              </Badge>
               {provider.verified && (
-                <span className="bg-emerald-600 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded flex items-center gap-1">
+                <Badge variant="emerald" className="text-[10px] uppercase font-bold px-2 py-0.5 gap-1">
                   <ShieldCheck size={12} /> Verified
-                </span>
+                </Badge>
               )}
             </div>
             <h2 className="text-2xl font-extrabold">{provider.name}</h2>
@@ -156,13 +160,13 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
                 <Calendar size={18} className="text-blue-600" />
                 <span>Book Service Appointment</span>
               </h3>
-              <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">
+              <Badge variant="emerald" className="text-[11px] font-semibold px-2 py-0.5">
                 No Payment Required Now
-              </span>
+              </Badge>
             </div>
 
             {bookingConfirmed ? (
-              <div className="bg-emerald-500 text-white p-4 rounded-xl text-center space-y-1 animate-in zoom-in-95">
+              <div className="bg-emerald-500 text-white p-4 rounded-xl text-center space-y-1 animate-in zoom-in-95 shadow-md">
                 <div className="text-lg font-bold">Booking Confirmed! 🎉</div>
                 <p className="text-xs">
                   {provider.name} will contact you shortly to confirm doorstep arrival.
@@ -225,13 +229,14 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
                   </div>
                 </div>
 
-                <button
+                <Button
                   type="submit"
-                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer transition-all flex items-center justify-center gap-2"
+                  size="lg"
+                  className="w-full h-11 bg-blue-600 hover:bg-blue-700 font-bold text-xs rounded-xl shadow-md gap-2"
                 >
                   <UserCheck size={16} />
                   <span>Confirm Slot & Book Now</span>
-                </button>
+                </Button>
               </form>
             )}
           </div>
@@ -242,3 +247,4 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
     </div>
   );
 };
+

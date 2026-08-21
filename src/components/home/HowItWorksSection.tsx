@@ -3,6 +3,9 @@
 import React from "react";
 import { HOW_IT_WORKS_STEPS } from "../../data/mockData";
 import { Search, SlidersHorizontal, Calendar, UserCheck, ChevronRight } from "../icons/Icons";
+import { Card } from "../ui/card";
+import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
 
 const getStepIcon = (iconName: string) => {
   switch (iconName) {
@@ -26,9 +29,9 @@ export const HowItWorksSection: React.FC = () => {
         
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto space-y-3">
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 uppercase tracking-wider bg-blue-50 px-3.5 py-1 rounded-full">
+          <Badge variant="secondary" className="bg-blue-50 text-blue-600 font-bold uppercase tracking-wider text-xs px-3.5 py-1">
             Simple 4-Step Process
-          </div>
+          </Badge>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
             How Sahayak-Local Works
           </h2>
@@ -45,9 +48,9 @@ export const HowItWorksSection: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
             {HOW_IT_WORKS_STEPS.map((item, index) => (
-              <div
+              <Card
                 key={item.step}
-                className="bg-slate-50 rounded-2xl p-6 sm:p-7 border border-slate-200/80 shadow-xs hover:shadow-xl hover:bg-white hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group"
+                className="bg-slate-50 rounded-2xl p-6 sm:p-7 border-slate-200/80 shadow-xs hover:shadow-xl hover:bg-white hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group"
               >
                 <div>
                   {/* Header Row: Step Number & Icon */}
@@ -64,9 +67,9 @@ export const HowItWorksSection: React.FC = () => {
                   <h3 className="text-xl font-bold text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">
                     {item.title}
                   </h3>
-                  <div className="text-xs font-semibold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-md w-fit mb-3">
+                  <Badge variant="secondary" className="text-xs font-semibold text-blue-700 bg-blue-50 border-none px-2.5 py-0.5 mb-3">
                     {item.subtitle}
-                  </div>
+                  </Badge>
                   <p className="text-xs text-slate-600 leading-relaxed font-normal">
                     {item.description}
                   </p>
@@ -79,7 +82,7 @@ export const HowItWorksSection: React.FC = () => {
                     <ChevronRight size={16} className="ml-auto" />
                   </div>
                 )}
-              </div>
+              </Card>
             ))}
           </div>
 
@@ -93,15 +96,16 @@ export const HowItWorksSection: React.FC = () => {
               Pay directly to the local service provider after job completion and 100% satisfaction.
             </p>
           </div>
-          <a
-            href="#services"
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold rounded-xl whitespace-nowrap shadow-md cursor-pointer transition-all"
+          <Button
+            render={<a href="#services" />}
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl whitespace-nowrap shadow-md"
           >
             Explore Services Now →
-          </a>
+          </Button>
         </div>
 
       </div>
     </section>
   );
 };
+
