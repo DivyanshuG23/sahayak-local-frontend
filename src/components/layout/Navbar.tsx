@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import {
   MapPin,
   Search,
@@ -37,6 +38,7 @@ interface NavbarProps {
   onOpenSearch: () => void;
   onOpenProviderModal: () => void;
   onOpenAuthModal: () => void;
+  activePage?: "home" | "services" | "businesses" | "how-it-works" | "about";
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -44,7 +46,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onSelectCity,
   onOpenSearch,
   onOpenProviderModal,
-  onOpenAuthModal
+  onOpenAuthModal,
+  activePage = "home"
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -73,7 +76,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Left: Brand Logo & Location Picker */}
           <div className="flex items-center gap-3 sm:gap-6">
-            <a href="#" className="flex items-center gap-2.5 group">
+            <Link href="/" className="flex items-center gap-2.5 group">
               <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform duration-200 shrink-0">
                 <Building2 size={20} className="sm:hidden" strokeWidth={2.2} />
                 <Building2 size={22} className="hidden sm:block" strokeWidth={2.2} />
@@ -86,7 +89,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   Trusted Neighborhood Services
                 </span>
               </div>
-            </a>
+            </Link>
 
             {/* Desktop Location Selector (Shadcn DropdownMenu) */}
             <div className="hidden md:block">
@@ -126,31 +129,55 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Center: Desktop Navigation Links */}
           <nav className="hidden lg:flex items-center gap-1 xl:gap-2">
-            <a href="#home">
-              <Button variant="secondary" size="sm" className="bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100/70">
+            <Link href="/">
+              <Button
+                variant={activePage === "home" ? "secondary" : "ghost"}
+                size="sm"
+                className={
+                  activePage === "home"
+                    ? "bg-blue-50 text-blue-700 font-bold hover:bg-blue-100/70"
+                    : "text-slate-600 font-medium hover:text-slate-900"
+                }
+              >
                 Home
               </Button>
-            </a>
-            <a href="#services">
-              <Button variant="ghost" size="sm" className="text-slate-600 font-medium hover:text-slate-900">
+            </Link>
+            <Link href="/services">
+              <Button
+                variant={activePage === "services" ? "secondary" : "ghost"}
+                size="sm"
+                className={
+                  activePage === "services"
+                    ? "bg-blue-50 text-blue-700 font-bold hover:bg-blue-100/70"
+                    : "text-slate-600 font-medium hover:text-slate-900"
+                }
+              >
                 Services
               </Button>
-            </a>
-            <a href="#categories">
-              <Button variant="ghost" size="sm" className="text-slate-600 font-medium hover:text-slate-900">
+            </Link>
+            <Link href="/services">
+              <Button
+                variant={activePage === "businesses" ? "secondary" : "ghost"}
+                size="sm"
+                className={
+                  activePage === "businesses"
+                    ? "bg-blue-50 text-blue-700 font-bold hover:bg-blue-100/70"
+                    : "text-slate-600 font-medium hover:text-slate-900"
+                }
+              >
                 Businesses
               </Button>
-            </a>
-            <a href="#how-it-works">
+            </Link>
+            <Link href="/#how-it-works">
               <Button variant="ghost" size="sm" className="text-slate-600 font-medium hover:text-slate-900">
                 How It Works
               </Button>
-            </a>
-            <a href="#why-us">
+            </Link>
+            <Link href="/#why-us">
               <Button variant="ghost" size="sm" className="text-slate-600 font-medium hover:text-slate-900">
                 About
               </Button>
-            </a>
+            </Link>
           </nav>
 
           {/* Right Action Buttons */}
