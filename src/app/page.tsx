@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Navbar } from "../components/layout/Navbar";
 import { HeroSection } from "../components/home/HeroSection";
 import { CategoriesSection } from "../components/home/CategoriesSection";
@@ -18,6 +19,7 @@ import { POPULAR_SERVICES, ServiceProvider } from "../data/mockData";
 import { CheckCircle2, Heart } from "../components/icons/Icons";
 
 export default function Home() {
+  const router = useRouter();
   const [selectedCity, setSelectedCity] = useState<string>("Jaipur, Rajasthan");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -142,7 +144,7 @@ export default function Home() {
           services={displayedServices}
           selectedCategory={selectedCategory}
           onSelectCategoryFilter={setSelectedCategory}
-          onSelectProvider={(provider) => setSelectedProvider(provider)}
+          onSelectProvider={(provider) => router.push(`/services/${provider.id}`)}
           favorites={favorites}
           onToggleFavorite={handleToggleFavorite}
         />

@@ -440,6 +440,202 @@ export const POPULAR_SERVICES: ServiceProvider[] = [
       { title: "Car Battery Emergency Jumpstart", price: 299, unit: "per instance" },
       { title: "Car General Checkup & Fluid Topup", price: 699, unit: "package" }
     ]
+  },
+  {
+    id: "sp-9",
+    name: "City Electric Care",
+    ownerName: "Vikas Verma",
+    category: "Electrician",
+    categoryId: "electrician",
+    rating: 4.6,
+    reviewCount: 88,
+    location: "Ghaziabad",
+    locality: "Indirapuram",
+    distanceKm: 0.9,
+    startingPrice: 249,
+    priceUnit: "visit",
+    availableToday: true,
+    verified: true,
+    badgeText: "Fastest Arrival",
+    imageUrl: "https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?auto=format&fit=crop&w=800&q=80",
+    avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+    experienceYears: 5,
+    completedJobs: 340,
+    phone: "+91 98110 54321",
+    responseTime: "Within 15 mins",
+    about: "Fast-response electrical repairs in Indirapuram & Vaishali. Specializes in emergency trip repairs, inverter setups, and smart home switches.",
+    highlights: [
+      "15-Minute Emergency Response",
+      "No Additional Night Charge",
+      "Govt Certified Wireman"
+    ],
+    pricingItems: [
+      { title: "Emergency Electrician Visit", price: 249, unit: "per visit" },
+      { title: "Inverter & Battery Wiring", price: 599, unit: "package" },
+      { title: "Smart Switchboard Panel Setup", price: 449, unit: "per board" }
+    ]
+  },
+  {
+    id: "sp-10",
+    name: "Reliable Home Solutions",
+    ownerName: "Suresh Gupta",
+    category: "Plumber",
+    categoryId: "plumber",
+    rating: 4.8,
+    reviewCount: 154,
+    location: "Ghaziabad",
+    locality: "Raj Nagar",
+    distanceKm: 1.4,
+    startingPrice: 299,
+    priceUnit: "visit",
+    availableToday: true,
+    verified: true,
+    badgeText: "Top Rated",
+    imageUrl: "https://images.unsplash.com/photo-1505798577917-a65157d3320a?auto=format&fit=crop&w=800&q=80",
+    avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80",
+    experienceYears: 11,
+    completedJobs: 710,
+    phone: "+91 98710 98765",
+    responseTime: "Within 25 mins",
+    about: "Reliable Plumbing and Drainage solutions across Ghaziabad. From minor tap leaks to complete bathroom pipeline overhauls.",
+    highlights: [
+      "Heavy Duty Pipe Threading",
+      "Bathroom Fittings Specialist",
+      "Clear Upfront Billing"
+    ],
+    pricingItems: [
+      { title: "Drain Blockage Clearing", price: 399, unit: "per line" },
+      { title: "Mixer Tap & Wall Unit Fix", price: 299, unit: "per unit" }
+    ]
+  },
+  {
+    id: "sp-11",
+    name: "SmartFix AC & Appliance",
+    ownerName: "Nitin Saxena",
+    category: "AC Repair",
+    categoryId: "ac-repair",
+    rating: 4.9,
+    reviewCount: 310,
+    location: "Ghaziabad",
+    locality: "Vaishali",
+    distanceKm: 2.1,
+    startingPrice: 399,
+    priceUnit: "service",
+    availableToday: true,
+    verified: true,
+    badgeText: "Best Warranty",
+    imageUrl: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=800&q=80",
+    avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
+    experienceYears: 8,
+    completedJobs: 1120,
+    phone: "+91 99100 11223",
+    responseTime: "Within 20 mins",
+    about: "Premier AC & Appliance repair hub in Vaishali. High-pressure jet cleaning, anti-bacterial foam coating, and original compressor spare parts.",
+    highlights: [
+      "Anti-Bacterial AC Jet Foam Service",
+      "Guaranteed Gas Refill (R32/R410)",
+      "90-Day Repair Warranty"
+    ],
+    pricingItems: [
+      { title: "Split AC Wet Servicing", price: 399, unit: "per AC" },
+      { title: "Window AC Maintenance", price: 349, unit: "per AC" }
+    ]
+  },
+  {
+    id: "sp-12",
+    name: "QuickFix Local Services",
+    ownerName: "Pankaj Chaudhary",
+    category: "Electrician",
+    categoryId: "electrician",
+    rating: 4.5,
+    reviewCount: 64,
+    location: "Noida",
+    locality: "Sector 62",
+    distanceKm: 3.5,
+    startingPrice: 199,
+    priceUnit: "visit",
+    availableToday: false,
+    verified: false,
+    imageUrl: "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&w=800&q=80",
+    avatarUrl: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
+    experienceYears: 4,
+    completedJobs: 210,
+    phone: "+91 98990 44556",
+    responseTime: "Within 1 hour",
+    about: "Affordable handyman & electrical service for students, bachelor apartments, and small offices in Sector 62 Noida.",
+    highlights: [
+      "Budget Friendly Rates",
+      "Same Day Booking",
+      "Light Fixtures & Wiring"
+    ],
+    pricingItems: [
+      { title: "Minor Electrical Repair Visit", price: 199, unit: "per visit" }
+    ]
+  },
+  {
+    id: "sp-13",
+    name: "Express Deep Cleaners",
+    ownerName: "Manju Rani",
+    category: "Cleaning",
+    categoryId: "cleaning",
+    rating: 4.7,
+    reviewCount: 92,
+    location: "Ghaziabad",
+    locality: "Crossings Republik",
+    distanceKm: 4.8,
+    startingPrice: 799,
+    priceUnit: "package",
+    availableToday: true,
+    verified: true,
+    badgeText: "High Satisfaction",
+    imageUrl: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=800&q=80",
+    avatarUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80",
+    experienceYears: 6,
+    completedJobs: 380,
+    phone: "+91 97110 33445",
+    responseTime: "Within 40 mins",
+    about: "Full apartment deep scrubbing, high-pressure balcony washing, and sofa sanitization with eco-safe solutions.",
+    highlights: [
+      "Industrial Scrubbing Machines",
+      "Balcony & Glass Cleaning",
+      "Sanitizer Spray Included"
+    ],
+    pricingItems: [
+      { title: "Full Bathroom Scrub & Sanitize", price: 799, unit: "per room" },
+      { title: "Kitchen Grease Degreasing", price: 999, unit: "package" }
+    ]
+  },
+  {
+    id: "sp-14",
+    name: "MasterTech Custom Carpentry",
+    ownerName: "Kuldeep Singh",
+    category: "Carpenter",
+    categoryId: "carpenter",
+    rating: 4.8,
+    reviewCount: 118,
+    location: "Ghaziabad",
+    locality: "Vasundhara",
+    distanceKm: 2.8,
+    startingPrice: 349,
+    priceUnit: "visit",
+    availableToday: true,
+    verified: true,
+    imageUrl: "https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=800&q=80",
+    avatarUrl: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=200&q=80",
+    experienceYears: 14,
+    completedJobs: 540,
+    phone: "+91 98100 66778",
+    responseTime: "Within 30 mins",
+    about: "Vasundhara's trusted woodwork craftsman for sliding door fixes, modular kitchen drawer alignment, and lock installations.",
+    highlights: [
+      "Precision Woodwork & Trimming",
+      "Door Hinges & Hydraulic Pistons",
+      "Plywood & Teak Finish Repairs"
+    ],
+    pricingItems: [
+      { title: "General Carpenter Inspection", price: 349, unit: "per visit" },
+      { title: "Door Lock & Handle Fitting", price: 299, unit: "per lock" }
+    ]
   }
 ];
 

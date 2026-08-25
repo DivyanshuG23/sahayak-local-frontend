@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { ServiceProvider, CATEGORIES } from "../../data/mockData";
 import {
   Star,
@@ -235,14 +236,15 @@ export const PopularServicesSection: React.FC<PopularServicesSectionProps> = ({
                       </div>
                     </div>
 
-                    {/* View Details Modal Trigger */}
-                    <Button
-                      onClick={() => onSelectProvider(provider)}
-                      className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl gap-1"
-                    >
-                      <span>View Details</span>
-                      <ChevronRight size={14} />
-                    </Button>
+                    {/* View Details Link Button */}
+                    <Link href={`/services/${provider.id}`}>
+                      <Button
+                        className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl gap-1 cursor-pointer"
+                      >
+                        <span>View Details</span>
+                        <ChevronRight size={14} />
+                      </Button>
+                    </Link>
                   </div>
                 </div>
 
