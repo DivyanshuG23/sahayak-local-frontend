@@ -10,7 +10,10 @@ import {
   ShieldCheck,
   Building2,
   UserCheck,
-  CheckCircle2
+  CheckCircle2,
+  Heart,
+  User,
+  Bell
 } from "../icons/Icons";
 import { CITIES } from "../../data/mockData";
 import { Button } from "../ui/button";
@@ -38,7 +41,7 @@ interface NavbarProps {
   onOpenSearch: () => void;
   onOpenProviderModal: () => void;
   onOpenAuthModal: () => void;
-  activePage?: "home" | "services" | "businesses" | "how-it-works" | "about";
+  activePage?: "home" | "services" | "businesses" | "how-it-works" | "about" | "my-bookings" | "favorites" | "profile" | "notifications" | "login" | "register" | "forgot-password";
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -168,6 +171,47 @@ export const Navbar: React.FC<NavbarProps> = ({
                 Businesses
               </Button>
             </Link>
+            <Link href="/my-bookings">
+              <Button
+                variant={activePage === "my-bookings" ? "secondary" : "ghost"}
+                size="sm"
+                className={
+                  activePage === "my-bookings"
+                    ? "bg-blue-50 text-blue-700 font-bold hover:bg-blue-100/70"
+                    : "text-slate-600 font-medium hover:text-slate-900"
+                }
+              >
+                My Bookings
+              </Button>
+            </Link>
+            <Link href="/favorites">
+              <Button
+                variant={activePage === "favorites" ? "secondary" : "ghost"}
+                size="sm"
+                className={
+                  activePage === "favorites"
+                    ? "bg-blue-50 text-blue-700 font-bold hover:bg-blue-100/70 flex items-center gap-1.5"
+                    : "text-slate-600 font-medium hover:text-slate-900 flex items-center gap-1.5"
+                }
+              >
+                <Heart size={14} className={activePage === "favorites" ? "text-rose-500 fill-rose-500" : "text-slate-400"} />
+                <span>Favorites</span>
+              </Button>
+            </Link>
+            <Link href="/profile">
+              <Button
+                variant={activePage === "profile" ? "secondary" : "ghost"}
+                size="sm"
+                className={
+                  activePage === "profile"
+                    ? "bg-blue-50 text-blue-700 font-bold hover:bg-blue-100/70 flex items-center gap-1.5"
+                    : "text-slate-600 font-medium hover:text-slate-900 flex items-center gap-1.5"
+                }
+              >
+                <User size={14} className={activePage === "profile" ? "text-blue-600" : "text-slate-400"} />
+                <span>Profile</span>
+              </Button>
+            </Link>
             <Link href="/#how-it-works">
               <Button variant="ghost" size="sm" className="text-slate-600 font-medium hover:text-slate-900">
                 How It Works
@@ -194,16 +238,37 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Search size={19} />
             </Button>
 
+            {/* Notifications Button */}
+            <Link href="/notifications">
+              <Button
+                variant={activePage === "notifications" ? "secondary" : "ghost"}
+                size="icon"
+                title="Notifications"
+                aria-label="Notifications"
+                className={`relative ${
+                  activePage === "notifications"
+                    ? "bg-blue-50 text-blue-600 font-bold"
+                    : "text-slate-600 hover:text-blue-600 hover:bg-slate-100"
+                }`}
+              >
+                <Bell size={19} />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-600 ring-2 ring-white" />
+              </Button>
+            </Link>
+
             {/* Login Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onOpenAuthModal}
-              className="hidden sm:inline-flex gap-1.5 font-semibold text-slate-700 hover:text-blue-600"
-            >
-              <UserCheck size={16} />
-              <span>Login</span>
-            </Button>
+            <Link href="/login">
+              <Button
+                variant={activePage === "login" ? "secondary" : "outline"}
+                size="sm"
+                className={`hidden sm:inline-flex gap-1.5 font-semibold ${
+                  activePage === "login" ? "bg-blue-50 text-blue-700 font-bold border-blue-200" : "text-slate-700 hover:text-blue-600"
+                }`}
+              >
+                <UserCheck size={16} />
+                <span>Login</span>
+              </Button>
+            </Link>
 
             {/* Get Started Button */}
             <a href="#services">
@@ -272,6 +337,25 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <span>Home</span>
                       <Badge variant="default" className="text-[10px] py-0 px-1.5 bg-blue-600">Main</Badge>
                     </a>
+                    <Link
+                      href="/my-bookings"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="px-3 py-2.5 rounded-lg text-sm font-semibold text-blue-700 bg-blue-50/70 hover:bg-blue-100 transition-colors flex items-center justify-between"
+                    >
+                      <span>My Bookings</span>
+                      <Badge variant="blue" className="text-[10px] py-0 px-1.5">Track</Badge>
+                    </Link>
+                    <Link
+                      href="/favorites"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="px-3 py-2.5 rounded-lg text-sm font-semibold text-rose-700 bg-rose-50/70 hover:bg-rose-100 transition-colors flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Heart size={15} className="text-rose-500 fill-rose-500" />
+                        <span>Favorites</span>
+                      </div>
+                      <Badge variant="rose" className="text-[10px] py-0 px-1.5 bg-rose-500 text-white">Saved</Badge>
+                    </Link>
                     <a
                       href="#services"
                       onClick={() => setMobileMenuOpen(false)}

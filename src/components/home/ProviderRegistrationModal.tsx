@@ -9,7 +9,7 @@ import { Badge } from "../ui/badge";
 interface ProviderRegistrationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (name: string) => void;
+  onSuccess?: (name: string) => void;
 }
 
 export const ProviderRegistrationModal: React.FC<ProviderRegistrationModalProps> = ({
@@ -31,7 +31,7 @@ export const ProviderRegistrationModal: React.FC<ProviderRegistrationModalProps>
     if (!businessName || !ownerName || !phone) return;
     setSubmitted(true);
     setTimeout(() => {
-      onSuccess(businessName);
+      onSuccess?.(businessName);
       setSubmitted(false);
       onClose();
     }, 1500);
