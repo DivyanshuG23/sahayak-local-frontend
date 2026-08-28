@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { X, UserCheck, CheckCircle2, Building2, ShieldCheck, Sparkles } from "../icons/Icons";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
@@ -8,7 +9,7 @@ import { Badge } from "../ui/badge";
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onLoginSuccess: (name: string) => void;
+  onLoginSuccess?: (name: string) => void;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess }) => {
@@ -31,7 +32,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
     e.preventDefault();
     setLoggedIn(true);
     setTimeout(() => {
-      onLoginSuccess(name || "Resident User");
+      onLoginSuccess?.(name || "Resident User");
       setLoggedIn(false);
       setOtpSent(false);
       onClose();
@@ -117,16 +118,27 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
               <span>Get OTP Verification Code</span>
             </Button>
 
-            <div className="text-center text-xs text-slate-500 pt-2 flex items-center justify-center gap-1">
-              <span>{isSignUp ? "Already have an account?" : "New to Sahayak-Local?"}</span>
-              <Button
-                type="button"
-                variant="link"
-                onClick={() => setIsSignUp(!isSignUp)}
-                className="p-0 h-auto text-xs font-bold text-blue-600 underline"
-              >
-                {isSignUp ? "Login here" : "Create an Account"}
-              </Button>
+            <div className="text-center text-xs text-slate-500 pt-2 space-y-1">
+              <div className="flex items-center justify-center gap-1">
+                <span>{isSignUp ? "Already have an account?" : "New to Sahayak-Local?"}</span>
+                <Button
+                  type="button"
+                  variant="link"
+                  onClick={() => setIsSignUp(!isSignUp)}
+                  className="p-0 h-auto text-xs font-bold text-blue-600 underline"
+                >
+                  {isSignUp ? "Login here" : "Create an Account"}
+                </Button>
+              </div>
+              <div>
+                <Link
+                  href={isSignUp ? "/register" : "/login"}
+                  onClick={onClose}
+                  className="text-[11px] font-semibold text-slate-400 hover:text-blue-600 underline"
+                >
+                  Or open full {isSignUp ? "Register Page" : "Login Page"} →
+                </Link>
+              </div>
             </div>
           </form>
         ) : (

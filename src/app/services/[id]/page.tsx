@@ -90,8 +90,7 @@ export default function ProviderDetailPage({ params }: PageProps) {
   };
 
   const handleContinueBooking = (date: string, time: string, address: string) => {
-    showToast(`Booking request generated for ${selectedService.title} on ${date} (${time})!`);
-    setSelectedModalProvider(provider);
+    router.push(`/booking?providerId=${provider.id}&serviceTitle=${encodeURIComponent(selectedService.title)}`);
   };
 
   return (
