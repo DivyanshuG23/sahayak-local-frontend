@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { Building2, ShieldCheck, UserCheck, ArrowRight, CheckCircle2 } from "../icons/Icons";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
@@ -58,15 +59,16 @@ export const ProviderCTA: React.FC<ProviderCTAProps> = ({ onOpenProviderModal })
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-4">
-              <Button
-                variant="emerald"
-                size="lg"
-                onClick={onOpenProviderModal}
-                className="px-7 py-3.5 text-slate-950 font-extrabold text-sm rounded-xl gap-2 shadow-lg shadow-emerald-500/20"
-              >
-                <UserCheck size={18} />
-                <span>Join as a Provider</span>
-              </Button>
+              <Link href="/provider/onboarding">
+                <Button
+                  variant="emerald"
+                  size="lg"
+                  className="px-7 py-3.5 text-slate-950 font-extrabold text-sm rounded-xl gap-2 shadow-lg shadow-emerald-500/20 cursor-pointer w-full sm:w-auto"
+                >
+                  <UserCheck size={18} />
+                  <span>Join as a Provider</span>
+                </Button>
+              </Link>
 
               <Button
                 render={<a href="#how-it-works" />}

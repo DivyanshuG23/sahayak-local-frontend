@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { Building2, Phone, Mail, MapPin, ShieldCheck, Heart, Sparkles, ArrowRight } from "../icons/Icons";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
@@ -90,15 +91,16 @@ export const Footer: React.FC<FooterProps> = ({ onOpenProviderModal, onOpenAuthM
             </div>
 
             <div className="pt-1 space-y-2.5">
-              <Button
-                variant="emerald"
-                size="sm"
-                onClick={onOpenProviderModal}
-                className="w-full justify-start gap-2 font-semibold shadow-xs"
-              >
-                <Sparkles size={14} />
-                Join as Provider
-              </Button>
+              <Link href="/provider/onboarding" className="block w-full">
+                <Button
+                  variant="emerald"
+                  size="sm"
+                  className="w-full justify-start gap-2 font-semibold shadow-xs cursor-pointer"
+                >
+                  <Sparkles size={14} />
+                  Join as Provider
+                </Button>
+              </Link>
 
               <Button
                 variant="outline"
@@ -111,12 +113,12 @@ export const Footer: React.FC<FooterProps> = ({ onOpenProviderModal, onOpenAuthM
 
               <ul className="space-y-2 text-xs pt-1">
                 <li>
-                  <button
-                    onClick={onOpenProviderModal}
-                    className="hover:text-blue-400 transition-colors text-left cursor-pointer"
+                  <Link
+                    href="/provider/dashboard"
+                    className="hover:text-blue-400 transition-colors text-left cursor-pointer inline-block"
                   >
                     Provider Dashboard
-                  </button>
+                  </Link>
                 </li>
                 <li>
                   <a href="#services" className="hover:text-blue-400 transition-colors">

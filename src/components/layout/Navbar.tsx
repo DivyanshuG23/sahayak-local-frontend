@@ -65,12 +65,12 @@ export const Navbar: React.FC<NavbarProps> = ({
         <span className="hidden sm:inline text-slate-300 text-xs truncate max-w-md">
           Discover 500+ trusted neighborhood professionals in your city.
         </span>
-        <button
-          onClick={onOpenProviderModal}
+        <Link
+          href="/provider/onboarding"
           className="text-blue-400 hover:text-blue-300 font-semibold underline underline-offset-2 transition-colors ml-1 cursor-pointer text-xs shrink-0"
         >
           Register as Provider →
-        </button>
+        </Link>
       </div>
 
       {/* Main Navbar Container */}
@@ -401,17 +401,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <span>Login / Sign Up</span>
                     </Button>
 
-                    <Button
-                      variant="emerald"
-                      size="default"
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        onOpenProviderModal();
-                      }}
-                      className="w-full justify-center font-semibold"
+                    <Link
+                      href="/provider/onboarding"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block w-full"
                     >
-                      Join as Service Provider
-                    </Button>
+                      <Button
+                        variant="emerald"
+                        size="default"
+                        className="w-full justify-center font-semibold cursor-pointer"
+                      >
+                        Join as Service Provider
+                      </Button>
+                    </Link>
                   </div>
                 </SheetContent>
               </Sheet>

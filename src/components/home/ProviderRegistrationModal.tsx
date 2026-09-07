@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { X, Building2, ShieldCheck, CheckCircle2, UserCheck } from "../icons/Icons";
 import { CATEGORIES, CITIES } from "../../data/mockData";
 import { Button } from "../ui/button";
@@ -173,8 +174,18 @@ export const ProviderRegistrationModal: React.FC<ProviderRegistrationModalProps>
               className="w-full h-11 font-bold rounded-xl shadow-md gap-2"
             >
               <UserCheck size={16} />
-              <span>Submit Provider Application</span>
+              <span>Submit Quick Application</span>
             </Button>
+
+            <div className="text-center pt-2">
+              <Link
+                href="/provider/onboarding"
+                onClick={onClose}
+                className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline"
+              >
+                Prefer full registration? Complete 5-Step Onboarding →
+              </Link>
+            </div>
           </form>
         )}
 
