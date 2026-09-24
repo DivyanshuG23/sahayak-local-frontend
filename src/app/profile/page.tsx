@@ -158,6 +158,7 @@ function ProfileContent() {
       {/* Sticky Navbar */}
       <Navbar
         activePage="profile"
+        isLoggedIn={true}
         selectedCity={selectedCity}
         onSelectCity={setSelectedCity}
         onOpenSearch={() => router.push("/services")}

@@ -88,22 +88,25 @@ export default function ProviderServicesPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl animate-in fade-in duration-200">
+    <div className="space-y-4 sm:space-y-6 w-full animate-in fade-in duration-200">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <Link
-            href="/provider/dashboard"
-            className="text-xs font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1"
-          >
-            <ArrowLeft size={13} />
-            <span>Back to Dashboard</span>
+          <Link href="/provider/dashboard" className="inline-block">
+            <Button
+              variant="ghost"
+              size="xs"
+              className="text-xs font-semibold text-slate-500 hover:text-blue-600 gap-1 px-1 -ml-1 h-6"
+            >
+              <ArrowLeft size={13} />
+              <span>Back to Dashboard</span>
+            </Button>
           </Link>
-          <div className="flex items-center gap-2.5 mt-1">
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+          <div className="flex items-center gap-2 mt-0.5 sm:mt-1 flex-wrap">
+            <h2 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">
               My Services & Pricing
             </h2>
-            <Badge variant="blue" className="text-xs font-bold px-2 py-0.5">
+            <Badge variant="blue" className="text-[10px] sm:text-xs font-bold px-2 py-0.5">
               {provider.category}
             </Badge>
           </div>
@@ -116,7 +119,7 @@ export default function ProviderServicesPage() {
           size="sm"
           variant="default"
           onClick={() => setIsAdding(!isAdding)}
-          className="gap-1.5 self-start sm:self-auto font-bold text-xs cursor-pointer shadow-xs"
+          className="gap-1.5 self-start sm:self-auto font-bold text-xs cursor-pointer shadow-xs h-8 sm:h-9"
         >
           {isAdding ? <X size={14} /> : <Plus size={14} />}
           <span>{isAdding ? "Cancel" : "+ Add New Package"}</span>
@@ -125,9 +128,9 @@ export default function ProviderServicesPage() {
 
       {/* Add Package Card Form */}
       {isAdding && (
-        <Card className="bg-blue-50/50 border-blue-200 shadow-xs animate-in zoom-in-95 duration-150">
+        <Card className="bg-blue-50/50 border-blue-200 shadow-xs animate-in zoom-in-95 duration-150 py-0 rounded-xl sm:rounded-2xl">
           <CardContent className="p-4 sm:p-5">
-            <form onSubmit={handleAddPackage} className="space-y-4">
+            <form onSubmit={handleAddPackage} className="space-y-3.5 sm:space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-blue-950 uppercase tracking-wider">
                   Add New Service Package
@@ -146,7 +149,7 @@ export default function ProviderServicesPage() {
                     placeholder="e.g., Inverter & Battery Routine Maintenance"
                     value={newServiceName}
                     onChange={(e) => setNewServiceName(e.target.value)}
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden bg-white"
+                    className="w-full h-9.5 px-3 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden bg-white"
                   />
                 </div>
 
@@ -159,22 +162,22 @@ export default function ProviderServicesPage() {
                     onChange={(e) =>
                       setNewServicePrice(e.target.value ? Number(e.target.value) : "")
                     }
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden bg-white"
+                    className="w-full h-9.5 px-3 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden bg-white"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2">
+              <div className="flex items-center justify-end gap-2 pt-1">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setIsAdding(false)}
-                  className="text-xs cursor-pointer"
+                  className="text-xs cursor-pointer h-8"
                 >
                   Cancel
                 </Button>
-                <Button type="submit" variant="default" size="sm" className="text-xs font-bold cursor-pointer">
+                <Button type="submit" variant="default" size="sm" className="text-xs font-bold cursor-pointer h-8">
                   Save Package to Profile
                 </Button>
               </div>
@@ -183,52 +186,54 @@ export default function ProviderServicesPage() {
         </Card>
       )}
 
-      {/* Overview Stat Strip */}
-      <div className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex flex-wrap items-center justify-between gap-4 text-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold shrink-0">
-            <Wrench size={20} />
-          </div>
-          <div>
-            <div className="font-bold text-slate-900">
-              {customServices.length} Active Packages Listed
+      {/* Overview Stat Strip using Shadcn Card */}
+      <Card className="bg-white border-slate-200/80 shadow-2xs py-0 rounded-xl sm:rounded-2xl">
+        <CardContent className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold shrink-0">
+              <Wrench size={19} />
             </div>
-            <div className="text-slate-500 text-[11px]">
-              Base Rate: ₹{provider.startingPrice || 399} ({provider.priceUnit || "per visit"})
+            <div>
+              <div className="font-bold text-slate-900 text-xs sm:text-sm">
+                {customServices.length} Active Packages Listed
+              </div>
+              <div className="text-slate-500 text-[11px]">
+                Base Rate: ₹{provider.startingPrice || 399} ({provider.priceUnit || "per visit"})
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-2 text-slate-500 text-[11px]">
-          <ShieldCheck size={14} className="text-emerald-500" />
-          <span>All packages include Sahayak Verified Quality & 30-Day Guarantee</span>
-        </div>
-      </div>
+          <div className="flex items-center gap-2 text-slate-500 text-[11px]">
+            <ShieldCheck size={14} className="text-emerald-500 shrink-0" />
+            <span>Includes Sahayak Verified Quality & 30-Day Guarantee</span>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Services List Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
         {customServices.map((service, index) => (
           <Card
             key={service.id || index}
-            className="bg-white border-slate-200/80 shadow-2xs hover:shadow-xs hover:border-blue-300/70 transition-all group"
+            className="bg-white border-slate-200/80 shadow-2xs hover:shadow-xs hover:border-blue-300/70 transition-all group py-0 rounded-xl sm:rounded-2xl"
           >
-            <CardContent className="p-4 sm:p-5 flex items-start justify-between gap-4">
+            <CardContent className="p-3.5 sm:p-5 flex items-start justify-between gap-3">
               <div className="space-y-1.5 flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-sm font-bold text-slate-900 truncate">{service.title}</h3>
-                  <Badge variant="emerald" className="text-[10px] px-1.5 py-0 font-bold">
+                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 truncate">{service.title}</h3>
+                  <Badge variant="emerald" className="text-[9px] sm:text-[10px] px-1.5 py-0 font-bold">
                     Active
                   </Badge>
                   {index === 0 && (
-                    <Badge variant="blue" className="text-[10px] px-1.5 py-0 font-bold">
-                      Starting Package
+                    <Badge variant="blue" className="text-[9px] sm:text-[10px] px-1.5 py-0 font-bold">
+                      Starting
                     </Badge>
                   )}
                 </div>
                 <p className="text-xs text-slate-500 line-clamp-2">
                   Standard doorstep inspection, diagnostics, and verified professional labor.
                 </p>
-                <div className="text-xs text-slate-400 font-medium flex items-center gap-2">
+                <div className="text-[11px] text-slate-400 font-medium flex items-center gap-2">
                   <span>Warranty: {service.warranty}</span>
                   <span>•</span>
                   <span>{provider.category}</span>
@@ -237,19 +242,21 @@ export default function ProviderServicesPage() {
 
               <div className="text-right shrink-0 flex flex-col items-end justify-between self-stretch">
                 <div>
-                  <div className="text-base font-black text-slate-900">₹{service.price}</div>
+                  <div className="text-sm sm:text-base font-black text-slate-900">₹{service.price}</div>
                   <div className="text-[10px] text-slate-400 font-medium">{service.unit}</div>
                 </div>
 
                 {customServices.length > 1 && (
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     onClick={() => handleRemovePackage(service.title)}
                     title="Remove this package"
-                    className="text-slate-300 hover:text-rose-600 transition-colors p-1 rounded-md opacity-0 group-hover:opacity-100 cursor-pointer"
+                    className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 h-7 w-7 rounded-lg transition-colors cursor-pointer opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                   >
                     <Trash2 size={14} />
-                  </button>
+                  </Button>
                 )}
               </div>
             </CardContent>

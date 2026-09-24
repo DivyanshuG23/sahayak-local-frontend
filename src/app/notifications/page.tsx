@@ -112,6 +112,7 @@ function NotificationsContent() {
       {/* Sticky Navbar */}
       <Navbar
         activePage="notifications"
+        isLoggedIn={true}
         selectedCity={selectedCity}
         onSelectCity={setSelectedCity}
         onOpenSearch={() => router.push("/services")}

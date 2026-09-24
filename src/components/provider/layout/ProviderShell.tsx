@@ -203,7 +203,7 @@ export const ProviderShell: React.FC<ProviderShellProps> = ({ children }) => {
           <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
             <SheetContent
               side="left"
-              className="p-0 w-[280px] sm:w-[320px] bg-white border-r border-slate-200"
+              className="p-0 w-[84vw] max-w-[320px] bg-white border-r border-slate-200 h-full overflow-hidden flex flex-col"
             >
               <div className="sr-only">
                 <SheetTitle>Provider Navigation</SheetTitle>
@@ -213,7 +213,7 @@ export const ProviderShell: React.FC<ProviderShellProps> = ({ children }) => {
                 isOnline={isOnline}
                 provider={provider}
                 onItemClick={() => setMobileSidebarOpen(false)}
-                className="w-full border-r-0"
+                className="w-full h-full border-r-0"
               />
             </SheetContent>
           </Sheet>
@@ -227,7 +227,7 @@ export const ProviderShell: React.FC<ProviderShellProps> = ({ children }) => {
               onOpenMobileMenu={() => setMobileSidebarOpen(true)}
             />
 
-            <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+            <main className="flex-1 p-3.5 sm:p-6 lg:p-8 w-full overflow-x-hidden">
               {children}
             </main>
           </div>

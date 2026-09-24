@@ -172,6 +172,7 @@ function MyBookingsContent() {
       {/* Sticky Navbar */}
       <Navbar
         activePage="my-bookings"
+        isLoggedIn={true}
         selectedCity={selectedCity}
         onSelectCity={setSelectedCity}
         onOpenSearch={() => router.push("/services")}
