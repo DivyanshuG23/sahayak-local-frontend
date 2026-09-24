@@ -19,6 +19,8 @@ import {
 } from "@/components/icons/Icons";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -64,84 +66,102 @@ export const ProviderHeader: React.FC<ProviderHeaderProps> = ({
   const getPageTitle = () => {
     if (pathname.includes("/provider/profile")) return "Business Profile";
     if (pathname.includes("/provider/services")) return "My Services";
-    if (pathname.includes("/provider/bookings")) return "Bookings Management";
-    if (pathname.includes("/provider/customers")) return "Customers Directory";
-    if (pathname.includes("/provider/reviews")) return "Ratings & Reviews";
-    if (pathname.includes("/provider/earnings")) return "Earnings & Payouts";
-    if (pathname.includes("/provider/settings")) return "Provider Settings";
-    return "Dashboard Overview";
+    if (pathname.includes("/provider/bookings")) return "Bookings";
+    if (pathname.includes("/provider/customers")) return "Customers";
+    if (pathname.includes("/provider/reviews")) return "Reviews";
+    if (pathname.includes("/provider/earnings")) return "Earnings";
+    if (pathname.includes("/provider/settings")) return "Settings";
+    return "Dashboard";
   };
 
+  const initials = provider.ownerName
+    ? provider.ownerName
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "SP";
+
   return (
-    <header className="sticky top-0 z-30 w-full bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 lg:px-8 py-3 transition-all duration-200">
-      <div className="flex items-center justify-between gap-4">
+    <header className="sticky top-0 z-30 w-full bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 transition-all duration-200">
+      <div className="flex items-center justify-between gap-2 sm:gap-4">
         {/* Left Section: Mobile Menu Trigger & Page Title */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
           <Button
             variant="ghost"
             size="icon"
             onClick={onOpenMobileMenu}
-            className="lg:hidden text-slate-700 hover:bg-slate-100"
+            className="lg:hidden text-slate-700 hover:bg-slate-100 shrink-0 h-9 w-9"
             aria-label="Toggle navigation menu"
           >
             <Menu size={20} />
           </Button>
 
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <h1 className="text-sm sm:text-lg font-black text-slate-900 tracking-tight truncate">
                 {getPageTitle()}
               </h1>
               <Badge
                 variant="emerald"
-                className="hidden sm:inline-flex text-[10px] px-1.5 py-0 font-bold gap-1"
+                className="hidden sm:inline-flex text-[10px] px-1.5 py-0 font-bold gap-1 shrink-0"
               >
                 <ShieldCheck size={11} className="text-emerald-500" />
-                <span>Verified Provider</span>
+                <span>Verified</span>
               </Badge>
             </div>
-            <p className="text-[11px] text-slate-500 hidden sm:flex items-center gap-1.5 font-medium mt-0.5">
+            <p className="text-[10px] sm:text-[11px] text-slate-500 hidden md:flex items-center gap-1.5 font-medium mt-0.5 truncate">
               <MapPin size={11} className="text-blue-500 shrink-0" />
-              <span>{provider.locality || provider.address || "Service Area"}, {provider.city}</span>
+              <span className="truncate">{provider.locality || provider.address || "Service Area"}, {provider.city}</span>
               <span>•</span>
-              <span>Radius: {provider.serviceRadiusKm} km</span>
+              <span className="shrink-0">Radius: {provider.serviceRadiusKm} km</span>
             </p>
           </div>
         </div>
 
-        {/* Right Section: Online Toggle, Quick Stats, Notifications & Profile */}
-        <div className="flex items-center gap-2.5 sm:gap-3.5">
+        {/* Right Section: Online Toggle, Notifications & Profile */}
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           {/* Real-time Online / Offline Availability Toggle */}
-          <button
+          <Button
+            variant={isOnline ? "outline" : "secondary"}
+            size="sm"
             onClick={onToggleOnline}
-            type="button"
             className={cn(
-              "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all border shadow-2xs cursor-pointer select-none",
+              "h-8 rounded-full px-2.5 sm:px-3 text-xs font-bold transition-all shadow-2xs cursor-pointer select-none gap-1.5 sm:gap-2",
               isOnline
-                ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100/80"
+                ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100/80 hover:text-emerald-800"
                 : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200/80"
             )}
             title="Click to toggle real-time booking availability"
           >
             <span
               className={cn(
-                "w-2.5 h-2.5 rounded-full shrink-0 transition-all",
+                "w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0 transition-all",
                 isOnline
-                  ? "bg-emerald-500 ring-4 ring-emerald-400/30 animate-pulse"
+                  ? "bg-emerald-500 ring-2 sm:ring-3 ring-emerald-400/40 animate-pulse"
                   : "bg-slate-400"
               )}
             />
-            <span className="hidden xs:inline">
+            {/* Show short label on mobile, full label on sm+ screens */}
+            <span className="inline sm:hidden text-[11px]">
+              {isOnline ? "Online" : "Off"}
+            </span>
+            <span className="hidden sm:inline">
               {isOnline ? "Accepting Jobs" : "Offline"}
             </span>
-          </button>
+          </Button>
 
           {/* Quick Metrics Badge (Desktop only) */}
           <div className="hidden xl:flex items-center gap-2.5 px-3 py-1 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-semibold">
             <span className="text-slate-500">Today:</span>
-            <span className="text-emerald-600 font-bold">₹3,450</span>
-            <span className="text-slate-300">|</span>
-            <span className="text-blue-600 font-bold">4 Bookings</span>
+            <Badge variant="emerald" className="px-1.5 py-0 h-4.5 text-[11px] font-bold">
+              ₹3,450
+            </Badge>
+            <Separator orientation="vertical" className="h-3" />
+            <Badge variant="blue" className="px-1.5 py-0 h-4.5 text-[11px] font-bold">
+              4 Bookings
+            </Badge>
           </div>
 
           {/* Notifications Dropdown */}
@@ -151,33 +171,38 @@ export const ProviderHeader: React.FC<ProviderHeaderProps> = ({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="relative text-slate-600 hover:text-blue-600 hover:bg-slate-100 rounded-xl"
+                  className="relative text-slate-600 hover:text-blue-600 hover:bg-slate-100 rounded-xl h-8 w-8 sm:h-9 sm:w-9 shrink-0"
                   aria-label="Provider Notifications"
                 >
-                  <Bell size={19} />
+                  <Bell size={18} />
                   {unreadCount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-600 ring-2 ring-white" />
+                    <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-blue-600 ring-2 ring-white" />
                   )}
                 </Button>
               }
             />
-            <DropdownMenuContent align="end" className="w-80 p-2 shadow-xl border-slate-200">
+            <DropdownMenuContent
+              align="end"
+              className="w-[calc(100vw-1.5rem)] max-w-sm sm:w-80 p-2 shadow-xl border-slate-200"
+            >
               <div className="flex items-center justify-between px-2 py-1.5 border-b border-slate-100">
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs font-bold text-slate-900">Notifications</span>
                   {unreadCount > 0 && (
-                    <span className="text-[10px] font-extrabold bg-blue-100 text-blue-700 px-1.5 py-0.2 rounded-full">
+                    <Badge variant="blue" className="text-[10px] px-1.5 py-0 h-4 font-bold">
                       {unreadCount} new
-                    </span>
+                    </Badge>
                   )}
                 </div>
                 {unreadCount > 0 && (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="xs"
                     onClick={markAllAsRead}
-                    className="text-[11px] text-blue-600 hover:text-blue-700 font-semibold cursor-pointer"
+                    className="text-[11px] text-blue-600 hover:text-blue-700 h-6 px-1.5 font-semibold"
                   >
                     Mark all read
-                  </button>
+                  </Button>
                 )}
               </div>
 
@@ -192,7 +217,7 @@ export const ProviderHeader: React.FC<ProviderHeaderProps> = ({
                       key={notif.id}
                       onClick={() => markNotificationAsRead(notif.id)}
                       className={cn(
-                        "p-2.5 rounded-lg text-left transition-colors cursor-pointer",
+                        "p-2.5 rounded-lg text-left transition-colors cursor-pointer active:bg-slate-100",
                         notif.isRead ? "hover:bg-slate-50 opacity-80" : "bg-blue-50/40 hover:bg-blue-50/70"
                       )}
                     >
@@ -215,7 +240,7 @@ export const ProviderHeader: React.FC<ProviderHeaderProps> = ({
               <div className="pt-1.5 border-t border-slate-100 text-center">
                 <Link
                   href="/provider/dashboard"
-                  className="text-[11px] text-blue-600 font-bold hover:underline"
+                  className="text-[11px] text-blue-600 font-bold hover:underline inline-block py-1"
                 >
                   View Activity Feed →
                 </Link>
@@ -223,38 +248,44 @@ export const ProviderHeader: React.FC<ProviderHeaderProps> = ({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Provider Profile Dropdown */}
+          {/* Provider Profile Dropdown using Shadcn DropdownMenu & Avatar */}
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
-                <button
-                  type="button"
-                  className="flex items-center gap-2 p-1 pl-1.5 pr-2 rounded-xl hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200 cursor-pointer select-none"
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 sm:h-9 px-1 sm:px-2 gap-1.5 sm:gap-2 rounded-xl hover:bg-slate-100 border border-transparent hover:border-slate-200 shrink-0"
                 >
-                  <img
-                    src={provider.avatarUrl}
-                    alt={provider.ownerName}
-                    className="w-8 h-8 rounded-lg object-cover ring-1 ring-slate-200 shrink-0"
-                  />
-                  <div className="hidden md:flex flex-col text-left">
-                    <span className="text-xs font-bold text-slate-900 leading-tight">
+                  <Avatar className="w-7 h-7 rounded-lg ring-1 ring-slate-200">
+                    <AvatarImage
+                      src={provider.avatarUrl}
+                      alt={provider.ownerName}
+                      className="rounded-lg"
+                    />
+                    <AvatarFallback className="rounded-lg bg-blue-100 text-blue-700 text-[10px] font-bold">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="hidden sm:flex flex-col text-left">
+                    <span className="text-xs font-bold text-slate-900 leading-tight truncate max-w-[90px]">
                       {provider.ownerName}
                     </span>
-                    <span className="text-[10px] text-slate-500 font-medium leading-none">
+                    <span className="text-[10px] text-slate-500 font-medium leading-none truncate max-w-[90px]">
                       {provider.category}
                     </span>
                   </div>
-                  <ChevronDown size={14} className="text-slate-400" />
-                </button>
+                  <ChevronDown size={14} className="text-slate-400 hidden sm:block" />
+                </Button>
               }
             />
             <DropdownMenuContent align="end" className="w-56 p-1.5 shadow-xl border-slate-200">
               <DropdownMenuGroup>
                 <DropdownMenuLabel className="px-2 py-1.5">
-                  <div className="text-xs font-extrabold text-slate-900">
+                  <div className="text-xs font-extrabold text-slate-900 truncate">
                     {provider.businessName}
                   </div>
-                  <div className="text-[11px] text-slate-500 font-medium">
+                  <div className="text-[11px] text-slate-500 font-medium truncate">
                     {provider.email}
                   </div>
                 </DropdownMenuLabel>

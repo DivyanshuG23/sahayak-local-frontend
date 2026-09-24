@@ -13,7 +13,8 @@ import {
   CheckCircle2,
   Heart,
   User,
-  Bell
+  Bell,
+  LogOut
 } from "../icons/Icons";
 import { CITIES } from "../../data/mockData";
 import { Button } from "../ui/button";
@@ -41,6 +42,9 @@ interface NavbarProps {
   onOpenSearch: () => void;
   onOpenProviderModal: () => void;
   onOpenAuthModal: () => void;
+  isLoggedIn?: boolean;
+  userName?: string;
+  onLogout?: () => void;
   activePage?: "home" | "services" | "businesses" | "how-it-works" | "about" | "my-bookings" | "favorites" | "profile" | "notifications" | "login" | "register" | "forgot-password";
 }
 
@@ -50,6 +54,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenSearch,
   onOpenProviderModal,
   onOpenAuthModal,
+  isLoggedIn = false,
+  userName = "User",
+  onLogout,
   activePage = "home"
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -132,6 +139,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Center: Desktop Navigation Links */}
           <nav className="hidden lg:flex items-center gap-1 xl:gap-2">
+            {/* === Common links (always visible) === */}
             <Link href="/">
               <Button
                 variant={activePage === "home" ? "secondary" : "ghost"}
@@ -171,57 +179,55 @@ export const Navbar: React.FC<NavbarProps> = ({
                 Businesses
               </Button>
             </Link>
-            <Link href="/my-bookings">
-              <Button
-                variant={activePage === "my-bookings" ? "secondary" : "ghost"}
-                size="sm"
-                className={
-                  activePage === "my-bookings"
-                    ? "bg-blue-50 text-blue-700 font-bold hover:bg-blue-100/70"
-                    : "text-slate-600 font-medium hover:text-slate-900"
-                }
-              >
-                My Bookings
-              </Button>
-            </Link>
-            <Link href="/favorites">
-              <Button
-                variant={activePage === "favorites" ? "secondary" : "ghost"}
-                size="sm"
-                className={
-                  activePage === "favorites"
-                    ? "bg-blue-50 text-blue-700 font-bold hover:bg-blue-100/70 flex items-center gap-1.5"
-                    : "text-slate-600 font-medium hover:text-slate-900 flex items-center gap-1.5"
-                }
-              >
-                <Heart size={14} className={activePage === "favorites" ? "text-rose-500 fill-rose-500" : "text-slate-400"} />
-                <span>Favorites</span>
-              </Button>
-            </Link>
-            <Link href="/profile">
-              <Button
-                variant={activePage === "profile" ? "secondary" : "ghost"}
-                size="sm"
-                className={
-                  activePage === "profile"
-                    ? "bg-blue-50 text-blue-700 font-bold hover:bg-blue-100/70 flex items-center gap-1.5"
-                    : "text-slate-600 font-medium hover:text-slate-900 flex items-center gap-1.5"
-                }
-              >
-                <User size={14} className={activePage === "profile" ? "text-blue-600" : "text-slate-400"} />
-                <span>Profile</span>
-              </Button>
-            </Link>
-            <Link href="/#how-it-works">
-              <Button variant="ghost" size="sm" className="text-slate-600 font-medium hover:text-slate-900">
-                How It Works
-              </Button>
-            </Link>
-            <Link href="/#why-us">
-              <Button variant="ghost" size="sm" className="text-slate-600 font-medium hover:text-slate-900">
-                About
-              </Button>
-            </Link>
+
+            {/* === Landing page only links (not logged in) === */}
+            {!isLoggedIn && (
+              <>
+                <Link href="/#how-it-works">
+                  <Button variant="ghost" size="sm" className="text-slate-600 font-medium hover:text-slate-900">
+                    How It Works
+                  </Button>
+                </Link>
+                <Link href="/#why-us">
+                  <Button variant="ghost" size="sm" className="text-slate-600 font-medium hover:text-slate-900">
+                    About
+                  </Button>
+                </Link>
+              </>
+            )}
+
+            {/* === Logged-in user links === */}
+            {isLoggedIn && (
+              <>
+                <Link href="/my-bookings">
+                  <Button
+                    variant={activePage === "my-bookings" ? "secondary" : "ghost"}
+                    size="sm"
+                    className={
+                      activePage === "my-bookings"
+                        ? "bg-blue-50 text-blue-700 font-bold hover:bg-blue-100/70"
+                        : "text-slate-600 font-medium hover:text-slate-900"
+                    }
+                  >
+                    My Bookings
+                  </Button>
+                </Link>
+                <Link href="/favorites">
+                  <Button
+                    variant={activePage === "favorites" ? "secondary" : "ghost"}
+                    size="sm"
+                    className={
+                      activePage === "favorites"
+                        ? "bg-blue-50 text-blue-700 font-bold hover:bg-blue-100/70 flex items-center gap-1.5"
+                        : "text-slate-600 font-medium hover:text-slate-900 flex items-center gap-1.5"
+                    }
+                  >
+                    <Heart size={14} className={activePage === "favorites" ? "text-rose-500 fill-rose-500" : "text-slate-400"} />
+                    <span>Favorites</span>
+                  </Button>
+                </Link>
+              </>
+            )}
           </nav>
 
           {/* Right Action Buttons */}
@@ -238,44 +244,107 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Search size={19} />
             </Button>
 
-            {/* Notifications Button */}
-            <Link href="/notifications">
-              <Button
-                variant={activePage === "notifications" ? "secondary" : "ghost"}
-                size="icon"
-                title="Notifications"
-                aria-label="Notifications"
-                className={`relative ${
-                  activePage === "notifications"
-                    ? "bg-blue-50 text-blue-600 font-bold"
-                    : "text-slate-600 hover:text-blue-600 hover:bg-slate-100"
-                }`}
-              >
-                <Bell size={19} />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-600 ring-2 ring-white" />
-              </Button>
-            </Link>
+            {/* === Logged-in: Notifications, Profile dropdown === */}
+            {isLoggedIn && (
+              <>
+                {/* Notifications Button */}
+                <Link href="/notifications">
+                  <Button
+                    variant={activePage === "notifications" ? "secondary" : "ghost"}
+                    size="icon"
+                    title="Notifications"
+                    aria-label="Notifications"
+                    className={`relative ${
+                      activePage === "notifications"
+                        ? "bg-blue-50 text-blue-600 font-bold"
+                        : "text-slate-600 hover:text-blue-600 hover:bg-slate-100"
+                    }`}
+                  >
+                    <Bell size={19} />
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-600 ring-2 ring-white" />
+                  </Button>
+                </Link>
 
-            {/* Login Button */}
-            <Link href="/login">
-              <Button
-                variant={activePage === "login" ? "secondary" : "outline"}
-                size="sm"
-                className={`hidden sm:inline-flex gap-1.5 font-semibold ${
-                  activePage === "login" ? "bg-blue-50 text-blue-700 font-bold border-blue-200" : "text-slate-700 hover:text-blue-600"
-                }`}
-              >
-                <UserCheck size={16} />
-                <span>Login</span>
-              </Button>
-            </Link>
+                {/* Profile Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={
+                      <Button
+                        variant={activePage === "profile" ? "secondary" : "ghost"}
+                        size="icon"
+                        title="Profile"
+                        aria-label="Profile"
+                        className={
+                          activePage === "profile"
+                            ? "bg-blue-50 text-blue-600"
+                            : "text-slate-600 hover:text-blue-600 hover:bg-slate-100"
+                        }
+                      >
+                        <User size={19} />
+                      </Button>
+                    }
+                  />
+                  <DropdownMenuContent className="w-48" align="end">
+                    <DropdownMenuLabel className="text-xs text-slate-500">
+                      Hi, {userName}
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <Link href="/profile">
+                      <DropdownMenuItem className="cursor-pointer gap-2">
+                        <User size={14} />
+                        <span>My Profile</span>
+                      </DropdownMenuItem>
+                    </Link>
+                    <Link href="/my-bookings">
+                      <DropdownMenuItem className="cursor-pointer gap-2">
+                        <CheckCircle2 size={14} />
+                        <span>My Bookings</span>
+                      </DropdownMenuItem>
+                    </Link>
+                    <Link href="/favorites">
+                      <DropdownMenuItem className="cursor-pointer gap-2">
+                        <Heart size={14} className="text-rose-500" />
+                        <span>Favorites</span>
+                      </DropdownMenuItem>
+                    </Link>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="cursor-pointer gap-2 text-red-600 focus:text-red-600"
+                      onClick={onLogout}
+                    >
+                      <LogOut size={14} />
+                      <span>Logout</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            )}
 
-            {/* Get Started Button */}
-            <a href="#services">
-              <Button variant="default" size="sm" className="hidden xs:inline-flex px-4 font-semibold">
-                Get Started
-              </Button>
-            </a>
+            {/* === Not logged in: Login + Get Started === */}
+            {!isLoggedIn && (
+              <>
+                {/* Login Button */}
+                <Link href="/login">
+                  <Button
+                    variant={activePage === "login" ? "secondary" : "outline"}
+                    size="sm"
+                    className={`hidden sm:inline-flex gap-1.5 font-semibold ${
+                      activePage === "login" ? "bg-blue-50 text-blue-700 font-bold border-blue-200" : "text-slate-700 hover:text-blue-600"
+                    }`}
+                  >
+                    <UserCheck size={16} />
+                    <span>Login</span>
+                  </Button>
+                </Link>
+
+                {/* Get Started Button */}
+                <a href="#services">
+                  <Button variant="default" size="sm" className="hidden xs:inline-flex px-4 font-semibold">
+                    Get Started
+                  </Button>
+                </a>
+              </>
+            )}
 
             {/* Mobile Sheet Menu Trigger */}
             <div className="lg:hidden">
@@ -329,91 +398,190 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                   {/* Navigation Links in Sheet */}
                   <nav className="flex flex-col gap-1 my-2">
-                    <a
-                      href="#home"
+                    {/* === Common links === */}
+                    <Link
+                      href="/"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="px-3 py-2.5 rounded-lg text-sm font-semibold bg-blue-50 text-blue-700 flex items-center justify-between"
+                      className={`px-3 py-2.5 rounded-lg text-sm font-semibold flex items-center justify-between ${
+                        activePage === "home"
+                          ? "bg-blue-50 text-blue-700"
+                          : "text-slate-700 hover:bg-slate-100"
+                      }`}
                     >
                       <span>Home</span>
-                      <Badge variant="default" className="text-[10px] py-0 px-1.5 bg-blue-600">Main</Badge>
-                    </a>
-                    <Link
-                      href="/my-bookings"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="px-3 py-2.5 rounded-lg text-sm font-semibold text-blue-700 bg-blue-50/70 hover:bg-blue-100 transition-colors flex items-center justify-between"
-                    >
-                      <span>My Bookings</span>
-                      <Badge variant="blue" className="text-[10px] py-0 px-1.5">Track</Badge>
+                      {activePage === "home" && (
+                        <Badge variant="default" className="text-[10px] py-0 px-1.5 bg-blue-600">Main</Badge>
+                      )}
                     </Link>
                     <Link
-                      href="/favorites"
+                      href="/services"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="px-3 py-2.5 rounded-lg text-sm font-semibold text-rose-700 bg-rose-50/70 hover:bg-rose-100 transition-colors flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Heart size={15} className="text-rose-500 fill-rose-500" />
-                        <span>Favorites</span>
-                      </div>
-                      <Badge variant="rose" className="text-[10px] py-0 px-1.5 bg-rose-500 text-white">Saved</Badge>
-                    </Link>
-                    <a
-                      href="#services"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+                      className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                        activePage === "services"
+                          ? "bg-blue-50 text-blue-700 font-semibold"
+                          : "text-slate-700 hover:bg-slate-100"
+                      }`}
                     >
                       Services
-                    </a>
+                    </Link>
                     <a
                       href="#categories"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+                      className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                        activePage === "businesses"
+                          ? "bg-blue-50 text-blue-700 font-semibold"
+                          : "text-slate-700 hover:bg-slate-100"
+                      }`}
                     >
                       Businesses
                     </a>
-                    <a
-                      href="#how-it-works"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
-                    >
-                      How It Works
-                    </a>
-                    <a
-                      href="#why-us"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
-                    >
-                      About Us
-                    </a>
+
+                    {/* === Landing page only links (not logged in) === */}
+                    {!isLoggedIn && (
+                      <>
+                        <a
+                          href="#how-it-works"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+                        >
+                          How It Works
+                        </a>
+                        <a
+                          href="#why-us"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+                        >
+                          About Us
+                        </a>
+                      </>
+                    )}
+
+                    {/* === Logged-in user links === */}
+                    {isLoggedIn && (
+                      <>
+                        <Link
+                          href="/my-bookings"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className={`px-3 py-2.5 rounded-lg text-sm font-semibold flex items-center justify-between transition-colors ${
+                            activePage === "my-bookings"
+                              ? "text-blue-700 bg-blue-50"
+                              : "text-blue-700 bg-blue-50/70 hover:bg-blue-100"
+                          }`}
+                        >
+                          <span>My Bookings</span>
+                          <Badge variant="blue" className="text-[10px] py-0 px-1.5">Track</Badge>
+                        </Link>
+                        <Link
+                          href="/favorites"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className={`px-3 py-2.5 rounded-lg text-sm font-semibold flex items-center justify-between transition-colors ${
+                            activePage === "favorites"
+                              ? "text-rose-700 bg-rose-50"
+                              : "text-rose-700 bg-rose-50/70 hover:bg-rose-100"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Heart size={15} className="text-rose-500 fill-rose-500" />
+                            <span>Favorites</span>
+                          </div>
+                          <Badge variant="rose" className="text-[10px] py-0 px-1.5 bg-rose-500 text-white">Saved</Badge>
+                        </Link>
+                        <Link
+                          href="/notifications"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className={`px-3 py-2.5 rounded-lg text-sm font-medium flex items-center justify-between transition-colors ${
+                            activePage === "notifications"
+                              ? "bg-blue-50 text-blue-700 font-semibold"
+                              : "text-slate-700 hover:bg-slate-100"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Bell size={15} className="text-slate-500" />
+                            <span>Notifications</span>
+                          </div>
+                          <span className="w-2 h-2 rounded-full bg-blue-600" />
+                        </Link>
+                        <Link
+                          href="/profile"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className={`px-3 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors ${
+                            activePage === "profile"
+                              ? "bg-blue-50 text-blue-700 font-semibold"
+                              : "text-slate-700 hover:bg-slate-100"
+                          }`}
+                        >
+                          <User size={15} className="text-slate-500" />
+                          <span>My Profile</span>
+                        </Link>
+                      </>
+                    )}
                   </nav>
 
                   {/* Actions in Sheet Footer */}
                   <div className="mt-auto pt-4 border-t border-slate-100 flex flex-col gap-2.5">
-                    <Button
-                      variant="outline"
-                      size="default"
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        onOpenAuthModal();
-                      }}
-                      className="w-full justify-center gap-2 font-semibold text-slate-800"
-                    >
-                      <UserCheck size={16} />
-                      <span>Login / Sign Up</span>
-                    </Button>
+                    {/* === Not logged in: Login + Provider CTA === */}
+                    {!isLoggedIn && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="default"
+                          onClick={() => {
+                            setMobileMenuOpen(false);
+                            onOpenAuthModal();
+                          }}
+                          className="w-full justify-center gap-2 font-semibold text-slate-800"
+                        >
+                          <UserCheck size={16} />
+                          <span>Login / Sign Up</span>
+                        </Button>
 
-                    <Link
-                      href="/provider/onboarding"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="block w-full"
-                    >
-                      <Button
-                        variant="emerald"
-                        size="default"
-                        className="w-full justify-center font-semibold cursor-pointer"
-                      >
-                        Join as Service Provider
-                      </Button>
-                    </Link>
+                        <Link
+                          href="/provider/onboarding"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="block w-full"
+                        >
+                          <Button
+                            variant="emerald"
+                            size="default"
+                            className="w-full justify-center font-semibold cursor-pointer"
+                          >
+                            Join as Service Provider
+                          </Button>
+                        </Link>
+                      </>
+                    )}
+
+                    {/* === Logged in: Provider CTA + Logout === */}
+                    {isLoggedIn && (
+                      <>
+                        <Link
+                          href="/provider/onboarding"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="block w-full"
+                        >
+                          <Button
+                            variant="emerald"
+                            size="default"
+                            className="w-full justify-center font-semibold cursor-pointer"
+                          >
+                            Join as Service Provider
+                          </Button>
+                        </Link>
+
+                        <Button
+                          variant="outline"
+                          size="default"
+                          onClick={() => {
+                            setMobileMenuOpen(false);
+                            onLogout?.();
+                          }}
+                          className="w-full justify-center gap-2 font-semibold text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                        >
+                          <LogOut size={16} />
+                          <span>Logout</span>
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </SheetContent>
               </Sheet>

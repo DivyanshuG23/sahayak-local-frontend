@@ -81,6 +81,7 @@ function FavoritesContent() {
       {/* Sticky Navbar */}
       <Navbar
         activePage="favorites"
+        isLoggedIn={true}
         selectedCity={selectedCity}
         onSelectCity={setSelectedCity}
         onOpenSearch={() => router.push("/services")}

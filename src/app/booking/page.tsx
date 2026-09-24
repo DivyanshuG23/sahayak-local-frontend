@@ -144,6 +144,7 @@ function BookingContent() {
       {/* Navbar */}
       <Navbar
         activePage="services"
+        isLoggedIn={true}
         selectedCity={selectedCity}
         onSelectCity={setSelectedCity}
         onOpenSearch={() => router.push("/services")}

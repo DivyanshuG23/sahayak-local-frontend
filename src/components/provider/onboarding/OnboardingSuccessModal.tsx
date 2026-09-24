@@ -28,7 +28,6 @@ export const OnboardingSuccessModal: React.FC<SuccessModalProps> = ({
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          router.push("/provider/dashboard");
           return 0;
         }
         return prev - 1;
@@ -36,7 +35,13 @@ export const OnboardingSuccessModal: React.FC<SuccessModalProps> = ({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [router]);
+  }, []);
+
+  useEffect(() => {
+    if (countdown === 0) {
+      router.push("/provider/dashboard");
+    }
+  }, [countdown, router]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-300">
