@@ -34,22 +34,30 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({ profile }) => {
         <div className="absolute -right-12 -top-12 w-64 h-64 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -left-12 -bottom-12 w-64 h-64 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="space-y-2.5 relative z-10 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 text-xs font-bold backdrop-blur-md">
-            <Sparkles size={13} className="text-blue-400" />
-            <span>{profile.memberTier}</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-            <span className="flex items-center gap-1">
-              <ShieldCheck size={13} className="text-emerald-400" /> Verified Account
-            </span>
-          </div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 relative z-10 max-w-2xl">
+          <img
+            src={profile.avatarUrl}
+            alt={profile.fullName}
+            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover ring-4 ring-white/20 shadow-xl shrink-0"
+          />
 
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
-            Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-white">{profile.fullName}</span>!
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-300 font-normal leading-relaxed">
-            Manage your personal information, saved addresses, service preferences, and account security.
-          </p>
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 text-xs font-bold backdrop-blur-md">
+              <Sparkles size={13} className="text-blue-400" />
+              <span>{profile.memberTier}</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+              <span className="flex items-center gap-1">
+                <ShieldCheck size={13} className="text-emerald-400" /> Verified Account
+              </span>
+            </div>
+
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
+              Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-white">{profile.fullName}</span>!
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-300 font-normal leading-relaxed">
+              Manage your personal information, saved addresses, service preferences, and account security.
+            </p>
+          </div>
         </div>
 
         {/* Quick Account Info Card */}

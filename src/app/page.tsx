@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "../components/layout/Navbar";
 import { HeroSection } from "../components/home/HeroSection";
@@ -15,18 +15,25 @@ import { Footer } from "../components/layout/Footer";
 import { ServiceDetailModal } from "../components/home/ServiceDetailModal";
 import { ProviderRegistrationModal } from "../components/home/ProviderRegistrationModal";
 import { AuthModal } from "../components/home/AuthModal";
-import { POPULAR_SERVICES, ServiceProvider } from "../data/mockData";
-import { CheckCircle2, Heart } from "../components/icons/Icons";
+import { ServiceProvider, Category } from "../data/mockData";
+import { CheckCircle2 } from "../components/icons/Icons";
+import { useGetCategoriesQuery } from "@/services/category.service";
+import { useGetServicesQuery } from "@/services/serviceCatalog.service";
+import { mapBackendCategoryToUi, mapBackendServiceToProvider } from "@/lib/apiAdapters";
 
 export default function Home() {
   const router = useRouter();
   const [selectedCity, setSelectedCity] = useState<string>("Jaipur, Rajasthan");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  
+
+  // Live Backend Queries
+  const { data: categoriesData } = useGetCategoriesQuery(undefined);
+  const { data: servicesData } = useGetServicesQuery({ limit: 12 });
+
   // Favorites state
-  const [favorites, setFavorites] = useState<string[]>(["sp-1", "sp-3"]);
-  
+  const [favorites, setFavorites] = useState<string[]>([]);
+
   // Modals state
   const [selectedProvider, setSelectedProvider] = useState<ServiceProvider | null>(null);
   const [isProviderModalOpen, setIsProviderModalOpen] = useState<boolean>(false);
@@ -41,6 +48,24 @@ export default function Home() {
       setToastMessage(null);
     }, 4000);
   };
+
+  // Map Live Categories
+  const liveCategories: Category[] = useMemo(() => {
+    const rawList = categoriesData?.data?.categories || categoriesData?.data || [];
+    if (Array.isArray(rawList) && rawList.length > 0) {
+      return rawList.map(mapBackendCategoryToUi);
+    }
+    return [];
+  }, [categoriesData]);
+
+  // Map Live Services
+  const allServices: ServiceProvider[] = useMemo(() => {
+    const rawServices = servicesData?.data?.services || servicesData?.data?.items || servicesData?.data || [];
+    if (Array.isArray(rawServices) && rawServices.length > 0) {
+      return rawServices.map((s: any) => mapBackendServiceToProvider(s));
+    }
+    return [];
+  }, [servicesData]);
 
   const handleToggleFavorite = (id: string) => {
     if (favorites.includes(id)) {
@@ -73,16 +98,16 @@ export default function Home() {
   };
 
   const handleContactTopProvider = (providerName: string) => {
-    const found = POPULAR_SERVICES.find((p) => p.name.includes(providerName.split(" ")[0]));
+    const found = allServices.find((p) => p.name.includes(providerName.split(" ")[0]));
     if (found) {
       setSelectedProvider(found);
-    } else {
-      setSelectedProvider(POPULAR_SERVICES[0]);
+    } else if (allServices.length > 0) {
+      setSelectedProvider(allServices[0]);
     }
   };
 
   // Filter services by search term if typed
-  const displayedServices = POPULAR_SERVICES.filter((item) => {
+  const displayedServices = allServices.filter((item) => {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     return (
@@ -96,7 +121,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900 selection:bg-blue-500 selection:text-white">
-      
       {/* Toast Notification Banner */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-2xl border border-slate-800 flex items-center gap-3 animate-in slide-in-from-bottom duration-300">
@@ -131,6 +155,7 @@ export default function Home() {
 
         {/* Section 3: POPULAR CATEGORIES */}
         <CategoriesSection
+          categories={liveCategories}
           activeCategory={selectedCategory}
           onSelectCategory={(slug) => {
             setSelectedCategory(slug === selectedCategory ? null : slug);
@@ -195,7 +220,6 @@ export default function Home() {
           showToast(`Welcome back, ${userName}!`);
         }}
       />
-
     </div>
   );
 }

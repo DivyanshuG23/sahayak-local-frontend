@@ -13,7 +13,10 @@ import { ServiceGrid } from "@/components/services/ServiceGrid";
 import { ServiceDetailModal } from "@/components/home/ServiceDetailModal";
 import { ProviderRegistrationModal } from "@/components/home/ProviderRegistrationModal";
 import { AuthModal } from "@/components/home/AuthModal";
-import { POPULAR_SERVICES, ServiceProvider, CATEGORIES } from "@/data/mockData";
+import { ServiceProvider, Category } from "@/data/mockData";
+import { useGetServicesQuery } from "@/services/serviceCatalog.service";
+import { useGetCategoriesQuery } from "@/services/category.service";
+import { mapBackendServiceToProvider, mapBackendCategoryToUi } from "@/lib/apiAdapters";
 import { ServiceFilterState, SortOption } from "@/features/services/types";
 import { CheckCircle2, HomeIcon, ChevronRight, SlidersHorizontal } from "@/components/icons/Icons";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -45,12 +48,37 @@ export default function ServicesPage() {
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState<boolean>(false);
 
   // Favorites state
-  const [favorites, setFavorites] = useState<string[]>(["sp-1", "sp-9"]);
+  const [favorites, setFavorites] = useState<string[]>([]);
 
   // Modals state
   const [selectedProvider, setSelectedProvider] = useState<ServiceProvider | null>(null);
   const [isProviderModalOpen, setIsProviderModalOpen] = useState<boolean>(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+
+  // Live Backend Queries
+  const { data: servicesData, isLoading: isServicesLoading } = useGetServicesQuery({
+    search: searchTerm.trim() || undefined,
+    limit: 50,
+  });
+  const { data: categoriesData } = useGetCategoriesQuery(undefined);
+
+  // Map Live Services strictly from Backend
+  const liveServices: ServiceProvider[] = useMemo(() => {
+    const raw = servicesData?.data?.services || servicesData?.data || [];
+    if (Array.isArray(raw)) {
+      return raw.map((s: any) => mapBackendServiceToProvider(s));
+    }
+    return [];
+  }, [servicesData]);
+
+  // Map Live Categories strictly from Backend
+  const liveCategories = useMemo(() => {
+    const raw = categoriesData?.data?.categories || categoriesData?.data || [];
+    if (Array.isArray(raw)) {
+      return raw.map(mapBackendCategoryToUi);
+    }
+    return [];
+  }, [categoriesData]);
 
   // Toast notification state
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -98,7 +126,7 @@ export default function ServicesPage() {
 
   const handleQuickCategoryClick = (categorySlug: string) => {
     setFilters((prev) => ({ ...prev, category: categorySlug }));
-    const foundCategory = CATEGORIES.find((c) => c.slug === categorySlug);
+    const foundCategory = liveCategories.find((c) => c.slug === categorySlug);
     if (foundCategory) {
       setSearchTerm(foundCategory.name);
       showToast(`Showing ${foundCategory.name} services`);
@@ -124,7 +152,7 @@ export default function ServicesPage() {
 
   // Filtering and Sorting Process
   const filteredAndSortedServices = useMemo(() => {
-    return POPULAR_SERVICES.filter((provider) => {
+    return liveServices.filter((provider) => {
       // Search Term Matching
       if (searchTerm.trim()) {
         const q = searchTerm.toLowerCase();
@@ -186,10 +214,10 @@ export default function ServicesPage() {
       // Default: recommended balance score
       return (b.rating * 2 + (b.verified ? 1 : 0)) - (a.rating * 2 + (a.verified ? 1 : 0));
     });
-  }, [searchTerm, locationTerm, filters, sortOption]);
+  }, [searchTerm, locationTerm, filters, sortOption, liveServices]);
 
   // Derived Title for Results Header
-  const activeCategoryObj = CATEGORIES.find((c) => c.slug === filters.category);
+  const activeCategoryObj = liveCategories.find((c) => c.slug === filters.category);
   const categoryDisplayTitle = activeCategoryObj ? `${activeCategoryObj.name} Services` : searchTerm ? `"${searchTerm}" Services` : "Local Services";
 
   return (

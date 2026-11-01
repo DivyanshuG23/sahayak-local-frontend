@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, use } from "react";
+import React, { useState, use, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
@@ -19,8 +19,11 @@ import { RelatedServices } from "@/components/services/provider-detail/RelatedSe
 import { ServiceDetailModal } from "@/components/home/ServiceDetailModal";
 import { ProviderRegistrationModal } from "@/components/home/ProviderRegistrationModal";
 import { AuthModal } from "@/components/home/AuthModal";
-import { POPULAR_SERVICES, ServiceProvider } from "@/data/mockData";
-import { CheckCircle2, HomeIcon, ChevronRight, Flag, Calendar, ArrowRight } from "@/components/icons/Icons";
+import { ServiceProvider } from "@/data/mockData";
+import { useGetServiceByIdQuery, useGetServicesQuery } from "@/services/serviceCatalog.service";
+import { useGetServiceReviewsQuery } from "@/services/review.service";
+import { mapBackendServiceToProvider } from "@/lib/apiAdapters";
+import { CheckCircle2, HomeIcon, ChevronRight, Flag, Calendar, ArrowRight, AlertCircle } from "@/components/icons/Icons";
 import { Button } from "@/components/ui/button";
 
 interface PageProps {
@@ -32,29 +35,70 @@ export default function ProviderDetailPage({ params }: PageProps) {
   const router = useRouter();
 
   // Find provider by ID, fallback to first item if not found
-  const provider = POPULAR_SERVICES.find((p) => p.id === resolvedParams.id) || POPULAR_SERVICES[0];
+  // Live Service and Reviews Query
+  const { data: serviceData, isLoading: isServiceLoading } = useGetServiceByIdQuery(resolvedParams.id, {
+    skip: !resolvedParams.id,
+  });
+  const { data: reviewsData } = useGetServiceReviewsQuery(resolvedParams.id, {
+    skip: !resolvedParams.id,
+  });
+  const { data: allServicesData } = useGetServicesQuery({ limit: 8 });
+
+  // Map Live Service or fallback to mock
+  const provider = useMemo(() => {
+    const raw = serviceData?.data;
+    if (raw) {
+      return mapBackendServiceToProvider(raw);
+    }
+    return null;
+  }, [serviceData]);
+
+  // Related providers from live catalog
+  const relatedProviders: ServiceProvider[] = useMemo(() => {
+    const rawServices = allServicesData?.data?.services || allServicesData?.data?.items || allServicesData?.data || [];
+    if (Array.isArray(rawServices)) {
+      return rawServices.map((s: any) => mapBackendServiceToProvider(s));
+    }
+    return [];
+  }, [allServicesData]);
 
   const [selectedCity, setSelectedCity] = useState<string>("Ghaziabad, UP");
   
   // Transform provider pricing items into selectable service list format
-  const serviceItems: ServiceItemData[] = provider.pricingItems.map((item, idx) => ({
-    id: `item-${idx}`,
-    title: item.title,
-    description: `Professional ${item.title.toLowerCase()} service carried out by verified technician with 30-day warranty.`,
-    price: item.price,
-    unit: item.unit,
-  }));
+  const serviceItems: ServiceItemData[] = useMemo(() => {
+    if (!provider) return [];
+    if (provider.pricingItems && provider.pricingItems.length > 0) {
+      return provider.pricingItems.map((item, idx) => ({
+        id: `item-${idx}`,
+        title: item.title,
+        description: `Professional ${item.title.toLowerCase()} service carried out by verified technician with 30-day warranty.`,
+        price: item.price,
+        unit: item.unit,
+      }));
+    }
+    return [{
+      id: "item-0",
+      title: `${provider.category} Inspection & Basic Repair`,
+      description: "Full safety audit and basic repair service.",
+      price: provider.startingPrice,
+      unit: provider.priceUnit,
+    }];
+  }, [provider]);
 
-  const [selectedService, setSelectedService] = useState<ServiceItemData>(serviceItems[0] || {
-    id: "item-0",
-    title: `${provider.category} Inspection & Basic Repair`,
-    description: "Full safety audit and basic repair service.",
-    price: provider.startingPrice,
-    unit: provider.priceUnit,
-  });
+  const [selectedServiceId, setSelectedServiceId] = useState<string>("item-0");
+
+  const selectedService: ServiceItemData = useMemo(() => {
+    return serviceItems.find((s) => s.id === selectedServiceId) || serviceItems[0] || {
+      id: "item-0",
+      title: provider?.name || "Service",
+      description: "Standard service",
+      price: provider?.startingPrice || 0,
+      unit: provider?.priceUnit || "visit",
+    };
+  }, [serviceItems, selectedServiceId, provider]);
 
   // State for modals
-  const [favorites, setFavorites] = useState<string[]>(["sp-1", "sp-9"]);
+  const [favorites, setFavorites] = useState<string[]>([]);
   const [selectedModalProvider, setSelectedModalProvider] = useState<ServiceProvider | null>(null);
   const [isProviderModalOpen, setIsProviderModalOpen] = useState<boolean>(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
@@ -84,14 +128,73 @@ export default function ProviderDetailPage({ params }: PageProps) {
     const el = document.getElementById("booking-card");
     if (el) {
       el.scrollIntoView({ behavior: "smooth" });
-    } else {
+    } else if (provider) {
       setSelectedModalProvider(provider);
     }
   };
 
   const handleContinueBooking = (date: string, time: string, address: string) => {
-    router.push(`/booking?providerId=${provider.id}&serviceTitle=${encodeURIComponent(selectedService.title)}`);
+    if (!provider) return;
+    router.push(`/booking?providerId=${provider.id}&serviceId=${resolvedParams.id || provider.id}&serviceTitle=${encodeURIComponent(selectedService.title)}`);
   };
+
+  if (isServiceLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+        <Navbar
+          activePage="services"
+          selectedCity={selectedCity}
+          onSelectCity={setSelectedCity}
+          onOpenSearch={() => router.push("/services")}
+          onOpenProviderModal={() => setIsProviderModalOpen(true)}
+          onOpenAuthModal={() => setIsAuthModalOpen(true)}
+        />
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="flex flex-col items-center gap-3 bg-white p-8 rounded-3xl border border-slate-200 shadow-xl">
+            <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            <p className="text-xs font-bold text-slate-800">Loading service details...</p>
+          </div>
+        </div>
+        <Footer
+          onOpenProviderModal={() => setIsProviderModalOpen(true)}
+          onOpenAuthModal={() => setIsAuthModalOpen(true)}
+        />
+      </div>
+    );
+  }
+
+  if (!provider) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+        <Navbar
+          activePage="services"
+          selectedCity={selectedCity}
+          onSelectCity={setSelectedCity}
+          onOpenSearch={() => router.push("/services")}
+          onOpenProviderModal={() => setIsProviderModalOpen(true)}
+          onOpenAuthModal={() => setIsAuthModalOpen(true)}
+        />
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center max-w-md mx-auto">
+          <div className="w-16 h-16 rounded-3xl bg-rose-50 text-rose-600 flex items-center justify-center mb-4">
+            <AlertCircle size={32} />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900 mb-2">Service Not Found</h2>
+          <p className="text-xs text-slate-500 mb-6">
+            The service provider you are looking for is either unavailable or has been removed.
+          </p>
+          <Link href="/services">
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl px-6 py-2.5">
+              Browse All Services
+            </Button>
+          </Link>
+        </div>
+        <Footer
+          onOpenProviderModal={() => setIsProviderModalOpen(true)}
+          onOpenAuthModal={() => setIsAuthModalOpen(true)}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900 selection:bg-blue-500 selection:text-white pb-20 md:pb-0">
@@ -195,7 +298,7 @@ export default function ProviderDetailPage({ params }: PageProps) {
             <ServiceList
               services={serviceItems}
               selectedServiceId={selectedService.id}
-              onSelectService={(item) => setSelectedService(item)}
+              onSelectService={(item) => setSelectedServiceId(item.id)}
             />
 
             {/* Working Hours Schedule */}
@@ -247,7 +350,7 @@ export default function ProviderDetailPage({ params }: PageProps) {
         <RelatedServices
           currentProviderId={provider.id}
           category={provider.category}
-          allProviders={POPULAR_SERVICES}
+          allProviders={relatedProviders}
           onSelectProvider={(relProvider) => {
             router.push(`/services/${relProvider.id}`);
           }}
