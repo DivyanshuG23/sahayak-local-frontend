@@ -3,10 +3,22 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Mail, AlertCircle, CheckCircle2, ArrowRight, UserCheck, Key, X } from "@/components/icons/Icons";
+import {
+  Mail,
+  AlertCircle,
+  ArrowRight,
+  UserCheck,
+  Key,
+  X,
+} from "@/components/icons/Icons";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "./PasswordInput";
 import { SocialLogin } from "./SocialLogin";
+import { useLoginMutation, useForgotPasswordMutation } from "@/services/auth.service";
+import { useAppSelector } from "@/store/hooks";
+import { sanitizeText, sanitizePassword, sanitizeEmail } from "@/lib/sanitizer";
+import { validateLoginIdentifier, validatePassword } from "@/lib/validation";
+import { getApiErrorMessage } from "@/lib/errorUtils";
 
 interface LoginFormProps {
   onSuccessLogin?: (email: string) => void;
@@ -15,87 +27,121 @@ interface LoginFormProps {
 export const LoginForm: React.FC<LoginFormProps> = ({ onSuccessLogin }) => {
   const router = useRouter();
 
+  // Redux Auth State
+  const auth = useAppSelector((state) => state.auth);
+
+  // RTK Query Mutations
+  const [login, { isLoading: isLoginLoading }] = useLoginMutation();
+  const [forgotPassword, { isLoading: isForgotLoading }] = useForgotPasswordMutation();
+
   // Form Fields State
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
 
   // Validation & Error States
-  const [errors, setErrors] = useState<{ identifier?: string; password?: string; general?: string }>({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<{
+    identifier?: string;
+    password?: string;
+    general?: string;
+  }>({});
 
   // Forgot Password Modal State
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotSentMsg, setForgotSentMsg] = useState<string | null>(null);
+  const [forgotErrorMsg, setForgotErrorMsg] = useState<string | null>(null);
 
-  // Validation function
+  // Validation function with sanitization
   const validateForm = (): boolean => {
+    const sanitizedId = sanitizeText(identifier);
+    const sanitizedPass = sanitizePassword(password);
+
+    const idError = validateLoginIdentifier(sanitizedId);
+    const passError = validatePassword(sanitizedPass, 4);
+
     const newErrors: { identifier?: string; password?: string } = {};
-
-    if (!identifier.trim()) {
-      newErrors.identifier = "Email or phone number is required";
-    } else {
-      // Basic check: looks like email or valid 10+ digit phone number
-      const isEmail = identifier.includes("@");
-      const isPhone = /^[0-9+\s-]{8,15}$/.test(identifier);
-
-      if (!isEmail && !isPhone) {
-        newErrors.identifier = "Please enter a valid email address or phone number";
-      }
-    }
-
-    if (!password) {
-      newErrors.password = "Password is required";
-    } else if (password.length < 4) {
-      newErrors.password = "Password must be at least 4 characters";
-    }
+    if (idError) newErrors.identifier = idError;
+    if (passError) newErrors.password = passError;
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return !idError && !passError;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    setIsLoading(true);
     setErrors({});
 
-    setTimeout(() => {
-      setIsLoading(false);
+    // Sanitize before submitting to API & Redux
+    const cleanIdentifier = sanitizeText(identifier);
+    const cleanPassword = sanitizePassword(password);
+
+    try {
+      const response = await login({
+        identifier: cleanIdentifier,
+        password: cleanPassword,
+      }).unwrap();
+
+      const user = response?.data?.user;
+      const userRole = user?.role;
+      const displayName = user?.fullName || user?.name || cleanIdentifier;
+
       if (onSuccessLogin) {
-        onSuccessLogin(identifier);
+        onSuccessLogin(displayName);
       } else {
-        router.push("/profile");
+        if (userRole === "provider") {
+          router.push("/provider/dashboard");
+        } else {
+          router.push("/profile");
+        }
       }
-    }, 800);
+    } catch (err: any) {
+      setErrors({
+        general: getApiErrorMessage(
+          err,
+          "Invalid email/phone or password. Please try again."
+        ),
+      });
+    }
   };
 
   const handleGoogleLogin = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      if (onSuccessLogin) {
-        onSuccessLogin("manoj.prajapati@gmail.com");
-      } else {
-        router.push("/profile");
-      }
-    }, 600);
+    setErrors({
+      general: "Google login is currently disabled for security. Please use email/phone and password.",
+    });
   };
 
-  const handleForgotSubmit = (e: React.FormEvent) => {
+  const handleForgotSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!forgotEmail.includes("@")) {
-      setForgotSentMsg("Please enter a valid email address.");
+    setForgotSentMsg(null);
+    setForgotErrorMsg(null);
+
+    const cleanEmail = sanitizeEmail(forgotEmail);
+    if (!cleanEmail.includes("@")) {
+      setForgotErrorMsg("Please enter a valid email address.");
       return;
     }
-    setForgotSentMsg(`Password reset instructions have been sent to ${forgotEmail}`);
-    setTimeout(() => {
-      setIsForgotModalOpen(false);
-      setForgotSentMsg(null);
-      setForgotEmail("");
-    }, 3000);
+
+    try {
+      const res = await forgotPassword({ email: cleanEmail }).unwrap();
+      setForgotSentMsg(
+        res?.message || `Password reset instructions have been sent to ${cleanEmail}`
+      );
+      setTimeout(() => {
+        setIsForgotModalOpen(false);
+        setForgotSentMsg(null);
+        setForgotEmail("");
+      }, 3500);
+    } catch (err: any) {
+      setForgotErrorMsg(
+        getApiErrorMessage(
+          err,
+          "Failed to send reset link. Please check your email."
+        )
+      );
+    }
   };
 
   return (
@@ -119,10 +165,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccessLogin }) => {
       )}
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         {/* Email or Phone Input */}
         <div className="space-y-1.5">
-          <label className="block text-xs font-bold text-slate-700">Email Address or Phone Number</label>
+          <label className="block text-xs font-bold text-slate-700">
+            Email Address or Phone Number
+          </label>
           <div className="relative">
             <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
               <Mail size={16} />
@@ -132,9 +180,16 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccessLogin }) => {
               value={identifier}
               onChange={(e) => {
                 setIdentifier(e.target.value);
-                if (errors.identifier) setErrors((prev) => ({ ...prev, identifier: undefined }));
+                if (errors.identifier) {
+                  setErrors((prev) => ({ ...prev, identifier: undefined }));
+                }
               }}
-              placeholder="e.g. manoj.prajapati@example.com or +91 9876543210"
+              onBlur={() => {
+                const err = validateLoginIdentifier(sanitizeText(identifier));
+                if (err) setErrors((prev) => ({ ...prev, identifier: err }));
+              }}
+              placeholder="e.g. manoj.prajapati@example.com or 9876543210"
+              autoComplete="username"
               className={`w-full bg-slate-50 border rounded-xl pl-10 pr-4 py-2.5 text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 transition-all shadow-2xs ${
                 errors.identifier
                   ? "border-rose-300 focus:ring-rose-500 bg-rose-50/30"
@@ -143,7 +198,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccessLogin }) => {
             />
           </div>
           {errors.identifier && (
-            <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1">
+            <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1 animate-in fade-in">
               <AlertCircle size={12} />
               <span>{errors.identifier}</span>
             </p>
@@ -153,11 +208,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccessLogin }) => {
         {/* Password Input */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label className="block text-xs font-bold text-slate-700">Password</label>
+            <label className="block text-xs font-bold text-slate-700">
+              Password
+            </label>
             <button
               type="button"
               onClick={() => setIsForgotModalOpen(true)}
-              className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline transition-colors"
+              className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline transition-colors cursor-pointer"
             >
               Forgot Password?
             </button>
@@ -166,13 +223,15 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccessLogin }) => {
             value={password}
             onChange={(e) => {
               setPassword(e.target.value);
-              if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
+              if (errors.password) {
+                setErrors((prev) => ({ ...prev, password: undefined }));
+              }
             }}
             error={!!errors.password}
             placeholder="••••••••"
           />
           {errors.password && (
-            <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1">
+            <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1 animate-in fade-in">
               <AlertCircle size={12} />
               <span>{errors.password}</span>
             </p>
@@ -186,7 +245,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccessLogin }) => {
               type="checkbox"
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
-              className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+              className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer"
             />
             <span>Remember me on this device</span>
           </label>
@@ -195,10 +254,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccessLogin }) => {
         {/* Submit Sign In Button */}
         <Button
           type="submit"
-          disabled={isLoading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-3 rounded-xl shadow-md gap-2 transition-all mt-2"
+          disabled={isLoginLoading}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-3 rounded-xl shadow-md gap-2 transition-all mt-2 cursor-pointer"
         >
-          {isLoading ? (
+          {isLoginLoading ? (
             <>
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               <span>Signing in...</span>
@@ -248,8 +307,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccessLogin }) => {
                 <span>Reset Password</span>
               </h3>
               <button
-                onClick={() => setIsForgotModalOpen(false)}
-                className="p-1 rounded-full text-slate-400 hover:text-slate-700"
+                onClick={() => {
+                  setIsForgotModalOpen(false);
+                  setForgotSentMsg(null);
+                  setForgotErrorMsg(null);
+                }}
+                className="p-1 rounded-full text-slate-400 hover:text-slate-700 cursor-pointer"
               >
                 <X size={16} />
               </button>
@@ -260,12 +323,18 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccessLogin }) => {
             </p>
 
             {forgotSentMsg && (
-              <div className="p-3 rounded-xl bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200">
+              <div className="p-3 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200">
                 {forgotSentMsg}
               </div>
             )}
 
-            <form onSubmit={handleForgotSubmit} className="space-y-3">
+            {forgotErrorMsg && (
+              <div className="p-3 rounded-xl bg-rose-50 text-rose-700 text-xs font-semibold border border-rose-200">
+                {forgotErrorMsg}
+              </div>
+            )}
+
+            <form onSubmit={handleForgotSubmit} className="space-y-3" noValidate>
               <input
                 type="email"
                 required
@@ -275,8 +344,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccessLogin }) => {
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
 
-              <Button type="submit" size="sm" className="w-full bg-blue-600 text-white font-bold text-xs">
-                Send Reset Link
+              <Button
+                type="submit"
+                disabled={isForgotLoading}
+                size="sm"
+                className="w-full bg-blue-600 text-white font-bold text-xs cursor-pointer"
+              >
+                {isForgotLoading ? "Sending..." : "Send Reset Link"}
               </Button>
             </form>
           </div>

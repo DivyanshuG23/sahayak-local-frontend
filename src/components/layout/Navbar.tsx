@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useAppSelector } from "@/store/hooks";
+import { useLogoutUserMutation } from "@/services/auth.service";
 import {
   MapPin,
   Search,
@@ -54,12 +56,28 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenSearch,
   onOpenProviderModal,
   onOpenAuthModal,
-  isLoggedIn = false,
-  userName = "User",
-  onLogout,
+  isLoggedIn: propIsLoggedIn,
+  userName: propUserName,
+  onLogout: propOnLogout,
   activePage = "home"
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const auth = useAppSelector((state) => state.auth);
+  const [logoutUser] = useLogoutUserMutation();
+
+  const isLoggedIn = propIsLoggedIn !== undefined ? propIsLoggedIn : auth.isAuthenticated;
+  const userName =
+    propUserName && propUserName !== "User"
+      ? propUserName
+      : auth.user?.fullName || auth.user?.name || "User";
+
+  const onLogout = () => {
+    if (propOnLogout) {
+      propOnLogout();
+    } else {
+      logoutUser();
+    }
+  };
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-2xs transition-all duration-200">
@@ -265,58 +283,33 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </Button>
                 </Link>
 
-                {/* Profile Dropdown */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    render={
-                      <Button
-                        variant={activePage === "profile" ? "secondary" : "ghost"}
-                        size="icon"
-                        title="Profile"
-                        aria-label="Profile"
-                        className={
-                          activePage === "profile"
-                            ? "bg-blue-50 text-blue-600"
-                            : "text-slate-600 hover:text-blue-600 hover:bg-slate-100"
-                        }
-                      >
-                        <User size={19} />
-                      </Button>
-                    }
-                  />
-                  <DropdownMenuContent className="w-48" align="end">
-                    <DropdownMenuLabel className="text-xs text-slate-500">
-                      Hi, {userName}
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <Link href="/profile">
-                      <DropdownMenuItem className="cursor-pointer gap-2">
-                        <User size={14} />
-                        <span>My Profile</span>
-                      </DropdownMenuItem>
-                    </Link>
-                    <Link href="/my-bookings">
-                      <DropdownMenuItem className="cursor-pointer gap-2">
-                        <CheckCircle2 size={14} />
-                        <span>My Bookings</span>
-                      </DropdownMenuItem>
-                    </Link>
-                    <Link href="/favorites">
-                      <DropdownMenuItem className="cursor-pointer gap-2">
-                        <Heart size={14} className="text-rose-500" />
-                        <span>Favorites</span>
-                      </DropdownMenuItem>
-                    </Link>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="cursor-pointer gap-2 text-red-600 focus:text-red-600"
-                      onClick={onLogout}
-                    >
-                      <LogOut size={14} />
-                      <span>Logout</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                {/* Profile Link: Directly opens user profile */}
+                <Link
+                  href={auth.user?.role === "provider" ? "/provider/profile" : "/profile"}
+                  title="My Profile"
+                >
+                  <Button
+                    variant={activePage === "profile" ? "secondary" : "ghost"}
+                    size="icon"
+                    title="Profile"
+                    aria-label="Profile"
+                    className={`cursor-pointer transition-colors overflow-hidden ${
+                      activePage === "profile"
+                        ? "bg-blue-50 text-blue-600 ring-2 ring-blue-500/30"
+                        : "text-slate-600 hover:text-blue-600 hover:bg-slate-100"
+                    }`}
+                  >
+                    {auth.user?.avatar ? (
+                      <img
+                        src={auth.user.avatar}
+                        alt={auth.user.fullName || "User"}
+                        className="w-7 h-7 rounded-full object-cover"
+                      />
+                    ) : (
+                      <User size={19} />
+                    )}
+                  </Button>
+                </Link>
               </>
             )}
 
@@ -510,7 +503,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                               : "text-slate-700 hover:bg-slate-100"
                           }`}
                         >
-                          <User size={15} className="text-slate-500" />
+                          {auth.user?.avatar ? (
+                            <img
+                              src={auth.user.avatar}
+                              alt={auth.user.fullName || "User"}
+                              className="w-5 h-5 rounded-full object-cover shrink-0 ring-1 ring-slate-200"
+                            />
+                          ) : (
+                            <User size={15} className="text-slate-500" />
+                          )}
                           <span>My Profile</span>
                         </Link>
                       </>

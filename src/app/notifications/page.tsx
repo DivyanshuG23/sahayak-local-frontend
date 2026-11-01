@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, Suspense } from "react";
+import React, { useState, useMemo, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -11,23 +11,109 @@ import { EmptyNotifications } from "@/components/notifications/EmptyNotification
 import { ProviderRegistrationModal } from "@/components/home/ProviderRegistrationModal";
 import { AuthModal } from "@/components/home/AuthModal";
 import {
-  INITIAL_NOTIFICATIONS,
   NotificationItemData,
-  NotificationCategory
+  NotificationCategory,
 } from "@/data/mockNotifications";
 import { CheckCircle2 } from "@/components/icons/Icons";
+import { useAppSelector } from "@/store/hooks";
+import { useGetMyBookingsQuery } from "@/services/booking.service";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
 function NotificationsContent() {
   const router = useRouter();
+  const auth = useAppSelector((state) => state.auth);
 
   // Platform state
   const [selectedCity, setSelectedCity] = useState<string>("Ghaziabad, UP");
   const [isProviderModalOpen, setIsProviderModalOpen] = useState<boolean>(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
 
+  // Live Bookings Query for dynamic booking notifications
+  const { data: myBookingsData } = useGetMyBookingsQuery(undefined, {
+    skip: !auth.isAuthenticated,
+  });
+
+  // Dynamic booking notifications derived from live backend
+  const liveNotifications: NotificationItemData[] = useMemo(() => {
+    const rawBookings =
+      myBookingsData?.data?.bookings || myBookingsData?.data || [];
+
+    if (Array.isArray(rawBookings) && rawBookings.length > 0) {
+      const generated: NotificationItemData[] = rawBookings.map(
+        (b: any, idx: number) => {
+          const bookingCode = b.bookingId || b._id;
+          const serviceName =
+            b.serviceSnapshot?.name || b.serviceId?.name || "Doorstep Service";
+          const status = (b.status || "PENDING").toUpperCase();
+
+          if (status === "COMPLETED") {
+            return {
+              id: `live-notif-${b._id || idx}`,
+              type: "service_completed",
+              category: "bookings",
+              title: "Service Completed",
+              message: `Your ${serviceName} booking (${bookingCode}) was completed. Please rate your experience!`,
+              timestamp: b.updatedAt
+                ? new Date(b.updatedAt).toLocaleDateString()
+                : "Recently",
+              dateStr: b.updatedAt || new Date().toISOString(),
+              isRead: false,
+              actionLabel: "Leave a Review",
+              actionUrl: `/my-bookings/${b._id || bookingCode}`,
+              badgeVariant: "emerald",
+            };
+          }
+
+          if (status === "CONFIRMED" || status === "ON_THE_WAY") {
+            return {
+              id: `live-notif-${b._id || idx}`,
+              type: "booking_confirmed",
+              category: "bookings",
+              title: "Booking Confirmed & Scheduled",
+              message: `Technician assigned for ${serviceName}. Job completion OTP: ${b.completionOtp || "Available on arrival"}.`,
+              timestamp: b.bookingDate
+                ? new Date(b.bookingDate).toLocaleDateString()
+                : "Upcoming",
+              dateStr: b.createdAt || new Date().toISOString(),
+              isRead: false,
+              actionLabel: "View Live Status",
+              actionUrl: `/my-bookings/${b._id || bookingCode}`,
+              badgeVariant: "blue",
+            };
+          }
+
+          return {
+            id: `live-notif-${b._id || idx}`,
+            type: "booking_reminder",
+            category: "bookings",
+            title: "Booking Request Received",
+            message: `Booking #${bookingCode} for ${serviceName} is awaiting technician confirmation.`,
+            timestamp: b.createdAt
+              ? new Date(b.createdAt).toLocaleDateString()
+              : "Just now",
+            dateStr: b.createdAt || new Date().toISOString(),
+            isRead: false,
+            actionLabel: "Track Booking",
+            actionUrl: `/my-bookings/${b._id || bookingCode}`,
+            badgeVariant: "secondary",
+          };
+        }
+      );
+
+      return generated;
+    }
+
+    return [];
+  }, [myBookingsData]);
+
   // Notifications state
-  const [notifications, setNotifications] = useState<NotificationItemData[]>(INITIAL_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<NotificationItemData[]>([]);
   const [activeTab, setActiveTab] = useState<NotificationCategory>("all");
+
+  // Keep state synced when live notifications load
+  useEffect(() => {
+    setNotifications(liveNotifications);
+  }, [liveNotifications]);
 
   // Toast state
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -75,8 +161,12 @@ function NotificationsContent() {
     const updates = notifications.filter((n) => n.category === "updates").length;
 
     const unreadAll = notifications.filter((n) => !n.isRead).length;
-    const unreadBookings = notifications.filter((n) => n.category === "bookings" && !n.isRead).length;
-    const unreadUpdates = notifications.filter((n) => n.category === "updates" && !n.isRead).length;
+    const unreadBookings = notifications.filter(
+      (n) => n.category === "bookings" && !n.isRead
+    ).length;
+    const unreadUpdates = notifications.filter(
+      (n) => n.category === "updates" && !n.isRead
+    ).length;
 
     return {
       all,
@@ -88,13 +178,13 @@ function NotificationsContent() {
     };
   }, [notifications]);
 
-  // Filter notifications by active tab
+  // Filter items by active category
   const filteredNotifications = useMemo(() => {
     if (activeTab === "bookings") {
-      return notifications.filter((n) => n.category === "bookings");
+      return notifications.filter((item) => item.category === "bookings");
     }
     if (activeTab === "updates") {
-      return notifications.filter((n) => n.category === "updates");
+      return notifications.filter((item) => item.category === "updates");
     }
     return notifications;
   }, [notifications, activeTab]);
@@ -112,7 +202,7 @@ function NotificationsContent() {
       {/* Sticky Navbar */}
       <Navbar
         activePage="notifications"
-        isLoggedIn={true}
+        isLoggedIn={auth.isAuthenticated}
         selectedCity={selectedCity}
         onSelectCity={setSelectedCity}
         onOpenSearch={() => router.push("/services")}
@@ -121,15 +211,15 @@ function NotificationsContent() {
       />
 
       {/* Main Container */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 flex-1 w-full space-y-6">
-        {/* Page Hero Header */}
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 flex-1 w-full space-y-6">
+        {/* Header Hero Banner */}
         <NotificationHeader
           unreadCount={counts.unreadAll}
           totalCount={counts.all}
           onMarkAllAsRead={handleMarkAllAsRead}
         />
 
-        {/* Filter Tabs */}
+        {/* Categories Tab Navigation */}
         <NotificationTabs
           activeTab={activeTab}
           onTabChange={setActiveTab}
@@ -137,22 +227,19 @@ function NotificationsContent() {
         />
 
         {/* Notifications List or Empty State */}
-        {filteredNotifications.length > 0 ? (
+        {filteredNotifications.length === 0 ? (
+          <EmptyNotifications activeTab={activeTab} />
+        ) : (
           <div className="space-y-3">
-            {filteredNotifications.map((notification) => (
+            {filteredNotifications.map((item) => (
               <NotificationItem
-                key={notification.id}
-                notification={notification}
+                key={item.id}
+                notification={item}
                 onToggleRead={handleToggleRead}
                 onDelete={handleDeleteNotification}
               />
             ))}
           </div>
-        ) : (
-          <EmptyNotifications
-            activeTab={activeTab}
-            onResetFilters={() => setActiveTab("all")}
-          />
         )}
       </main>
 
@@ -166,7 +253,7 @@ function NotificationsContent() {
       <ProviderRegistrationModal
         isOpen={isProviderModalOpen}
         onClose={() => setIsProviderModalOpen(false)}
-        onSuccess={(bName) => showToast(`Registered "${bName}" successfully on Sahayak-Local!`)}
+        onSuccess={(bName) => showToast(`Registered "${bName}" successfully!`)}
       />
 
       <AuthModal
@@ -182,15 +269,14 @@ export default function NotificationsPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-slate-50">
-          <div className="flex items-center gap-3 text-slate-600 font-bold">
-            <div className="w-6 h-6 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
-            <span>Loading Notifications...</span>
-          </div>
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-slate-500 text-sm font-bold">
+          Loading Notifications...
         </div>
       }
     >
-      <NotificationsContent />
+      <ProtectedRoute>
+        <NotificationsContent />
+      </ProtectedRoute>
     </Suspense>
   );
 }

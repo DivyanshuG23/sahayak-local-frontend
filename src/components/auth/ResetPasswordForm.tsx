@@ -1,46 +1,48 @@
 "use client";
 
 import React, { useState } from "react";
-import { Key, AlertCircle, CheckCircle2, Lock } from "@/components/icons/Icons";
+import { Key, AlertCircle, ShieldCheck } from "@/components/icons/Icons";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "./PasswordInput";
+import { useResetPasswordMutation } from "@/services/auth.service";
+import { sanitizePassword } from "@/lib/sanitizer";
+import { validatePassword, evaluatePasswordStrength } from "@/lib/validation";
+import { getApiErrorMessage } from "@/lib/errorUtils";
 
 interface ResetPasswordFormProps {
+  token?: string;
   onSuccessReset: () => void;
 }
 
 export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
+  token = "",
   onSuccessReset,
 }) => {
+  const [resetPassword, { isLoading }] = useResetPasswordMutation();
+
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  
-  const [errors, setErrors] = useState<{ newPassword?: string; confirmPassword?: string }>({});
-  const [isLoading, setIsLoading] = useState(false);
 
-  // Simple strength score
-  const getPasswordStrength = () => {
-    if (!newPassword) return null;
-    if (newPassword.length < 6) return { label: "Weak", color: "bg-rose-500 text-rose-600", width: "w-1/3" };
-    if (newPassword.length < 10 || !/\d/.test(newPassword))
-      return { label: "Fair", color: "bg-amber-500 text-amber-600", width: "w-2/3" };
-    return { label: "Strong", color: "bg-emerald-500 text-emerald-600", width: "w-full" };
-  };
+  const [errors, setErrors] = useState<{
+    newPassword?: string;
+    confirmPassword?: string;
+    general?: string;
+  }>({});
 
-  const strength = getPasswordStrength();
+  const strength = evaluatePasswordStrength(newPassword);
 
   const validate = (): boolean => {
+    const cleanPass = sanitizePassword(newPassword);
+    const cleanConfirm = sanitizePassword(confirmPassword);
+
     const newErr: { newPassword?: string; confirmPassword?: string } = {};
 
-    if (!newPassword) {
-      newErr.newPassword = "New password is required";
-    } else if (newPassword.length < 6) {
-      newErr.newPassword = "Password must be at least 6 characters long";
-    }
+    const passErr = validatePassword(cleanPass, 6);
+    if (passErr) newErr.newPassword = passErr;
 
-    if (!confirmPassword) {
+    if (!cleanConfirm) {
       newErr.confirmPassword = "Please confirm your new password";
-    } else if (newPassword !== confirmPassword) {
+    } else if (cleanPass !== cleanConfirm) {
       newErr.confirmPassword = "Passwords do not match";
     }
 
@@ -48,16 +50,26 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
     return Object.keys(newErr).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
 
-    setIsLoading(true);
+    setErrors({});
+    const cleanPass = sanitizePassword(newPassword);
 
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      if (token) {
+        await resetPassword({ token, password: cleanPass }).unwrap();
+      }
       onSuccessReset();
-    }, 800);
+    } catch (apiErr: any) {
+      setErrors({
+        general: getApiErrorMessage(
+          apiErr,
+          "Failed to reset password. The reset link may have expired."
+        ),
+      });
+    }
   };
 
   return (
@@ -73,39 +85,57 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
           Create New Password
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto leading-relaxed">
-          Your identity has been verified. Please set your new secure password below.
+          Please set your new secure password below.
         </p>
       </div>
 
+      {/* General Error Banner */}
+      {errors.general && (
+        <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2 max-w-sm mx-auto animate-in fade-in duration-200">
+          <AlertCircle size={16} className="text-rose-500 shrink-0" />
+          <span>{errors.general}</span>
+        </div>
+      )}
+
       {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-4 max-w-sm mx-auto">
+      <form onSubmit={handleSubmit} className="space-y-4 max-w-sm mx-auto" noValidate>
         {/* New Password */}
         <div className="space-y-1.5 text-left">
-          <label className="block text-xs font-bold text-slate-700">New Password</label>
+          <div className="flex items-center justify-between">
+            <label className="block text-xs font-bold text-slate-700">
+              New Password
+            </label>
+            {strength && (
+              <span
+                className={`text-[11px] font-bold ${strength.color} flex items-center gap-1`}
+              >
+                <ShieldCheck size={12} />
+                <span>{strength.label}</span>
+              </span>
+            )}
+          </div>
           <PasswordInput
             value={newPassword}
             onChange={(e) => {
               setNewPassword(e.target.value);
-              if (errors.newPassword) setErrors((prev) => ({ ...prev, newPassword: undefined }));
+              if (errors.newPassword) {
+                setErrors((prev) => ({ ...prev, newPassword: undefined }));
+              }
             }}
             error={!!errors.newPassword}
             placeholder="At least 6 characters"
           />
 
-          {/* Strength Bar */}
-          {strength && (
-            <div className="pt-1.5 space-y-1">
-              <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div className={`h-full ${strength.color.split(" ")[0]} ${strength.width} transition-all duration-300`} />
-              </div>
-              <span className={`text-[10px] font-extrabold uppercase tracking-wider block text-right ${strength.color.split(" ")[1]}`}>
-                Strength: {strength.label}
-              </span>
+          {newPassword && strength && (
+            <div className="w-full bg-slate-100 rounded-full h-1 mt-1.5 overflow-hidden">
+              <div
+                className={`h-full transition-all duration-300 ${strength.barColor} ${strength.width}`}
+              />
             </div>
           )}
 
           {errors.newPassword && (
-            <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1">
+            <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1 animate-in fade-in">
               <AlertCircle size={12} />
               <span>{errors.newPassword}</span>
             </p>
@@ -114,40 +144,40 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
 
         {/* Confirm Password */}
         <div className="space-y-1.5 text-left">
-          <label className="block text-xs font-bold text-slate-700">Confirm New Password</label>
+          <label className="block text-xs font-bold text-slate-700">
+            Confirm Password
+          </label>
           <PasswordInput
             value={confirmPassword}
             onChange={(e) => {
               setConfirmPassword(e.target.value);
-              if (errors.confirmPassword) setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
+              if (errors.confirmPassword) {
+                setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
+              }
             }}
             error={!!errors.confirmPassword}
             placeholder="Re-enter new password"
           />
           {errors.confirmPassword && (
-            <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1">
+            <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1 animate-in fade-in">
               <AlertCircle size={12} />
               <span>{errors.confirmPassword}</span>
             </p>
           )}
         </div>
 
-        {/* Submit Reset Button */}
         <Button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-3 rounded-xl shadow-md gap-2 transition-all mt-2"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-3 rounded-xl shadow-md gap-2 transition-all cursor-pointer"
         >
           {isLoading ? (
             <>
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              <span>Resetting Password...</span>
+              <span>Updating Password...</span>
             </>
           ) : (
-            <>
-              <CheckCircle2 size={16} />
-              <span>Reset Password</span>
-            </>
+            <span>Reset Password</span>
           )}
         </Button>
       </form>

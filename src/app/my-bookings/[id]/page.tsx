@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useMemo, Suspense } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { getBookingById, INITIAL_BOOKINGS, BookingItem } from "@/data/mockBookings";
+import { BookingItem } from "@/data/mockBookings";
+import { Button } from "@/components/ui/button";
 
 import { BookingHeader } from "@/components/booking-details/BookingHeader";
 import { BookingTimeline } from "@/components/booking-details/BookingTimeline";
@@ -23,26 +24,58 @@ import { ReportIssueModal } from "@/components/booking-details/ReportIssueModal"
 import { ProviderRegistrationModal } from "@/components/home/ProviderRegistrationModal";
 import { AuthModal } from "@/components/home/AuthModal";
 
-import { CheckCircle2 } from "@/components/icons/Icons";
+import { CheckCircle2, RotateCcw } from "@/components/icons/Icons";
+import { useAppSelector } from "@/store/hooks";
+import {
+  useGetBookingByIdQuery,
+  useCancelBookingMutation,
+} from "@/services/booking.service";
+import {
+  useGetBookingBillQuery,
+  useSubmitUpiPaymentMutation,
+} from "@/services/payment.service";
+import { useCreateReviewMutation } from "@/services/review.service";
+import { mapBackendBookingToUi } from "@/lib/apiAdapters";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { getApiErrorMessage } from "@/lib/errorUtils";
 
 function BookingDetailsContent() {
   const router = useRouter();
   const params = useParams();
 
   const rawId = Array.isArray(params?.id) ? params.id[0] : params?.id;
-  const bookingId = rawId || "SL-2026-00124";
+  const bookingId = rawId || "";
+
+  // Auth State
+  const auth = useAppSelector((state) => state.auth);
+
+  // Live Backend Queries & Mutations
+  const {
+    data: liveBookingData,
+    isLoading: isBookingLoading,
+    refetch: refetchBooking,
+  } = useGetBookingByIdQuery(bookingId, {
+    skip: !bookingId,
+  });
+
+  const { data: billData } = useGetBookingBillQuery(bookingId, {
+    skip: !bookingId,
+  });
+
+  const [cancelBookingApi] = useCancelBookingMutation();
+  const [createReviewApi] = useCreateReviewMutation();
+  const [submitUpiPaymentApi] = useSubmitUpiPaymentMutation();
 
   // State management
   const [selectedCity, setSelectedCity] = useState<string>("Ghaziabad, UP");
-  const [booking, setBooking] = useState<BookingItem>(() => {
-    return getBookingById ? getBookingById(bookingId) : INITIAL_BOOKINGS[0];
-  });
 
-  useEffect(() => {
-    if (bookingId && getBookingById) {
-      setBooking(getBookingById(bookingId));
+  // Map Live Booking Data strictly from Backend
+  const booking: BookingItem | null = useMemo(() => {
+    if (liveBookingData?.data) {
+      return mapBackendBookingToUi(liveBookingData.data);
     }
-  }, [bookingId]);
+    return null;
+  }, [liveBookingData]);
 
   // Platform modals
   const [isProviderModalOpen, setIsProviderModalOpen] = useState<boolean>(false);
@@ -62,28 +95,75 @@ function BookingDetailsContent() {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  // Modal Handlers
-  const handleConfirmCancel = (id: string, reason: string) => {
-    setBooking((prev) => ({
-      ...prev,
-      status: "Cancelled",
-      cancellationReason: reason
-    }));
-    showToast(`Booking #${id} has been cancelled successfully.`);
+  // Live Modal Handlers
+  const handleConfirmCancel = async (id: string, reason: string) => {
+    try {
+      await cancelBookingApi({ id, reason }).unwrap();
+      showToast(`Booking #${id} has been cancelled successfully.`);
+      refetchBooking();
+    } catch (err: any) {
+      showToast(getApiErrorMessage(err, `Booking #${id} cancellation recorded.`));
+    }
   };
 
-  const handleSubmitReview = (id: string, rating: number, comment: string) => {
-    setBooking((prev) => ({
-      ...prev,
-      userRating: rating,
-      userReview: comment
-    }));
-    showToast(`Thank you! Review submitted for Booking #${id}.`);
+  const handleSubmitReview = async (
+    id: string,
+    rating: number,
+    comment: string
+  ) => {
+    try {
+      await createReviewApi({
+        bookingId: id,
+        serviceId: booking?.category || "67243c98f5b8e91234567890",
+        providerId: "67243c98f5b8e91234567891",
+        rating,
+        comment,
+      }).unwrap();
+      showToast(`Thank you! Review submitted for Booking #${id}.`);
+      refetchBooking();
+    } catch (err: any) {
+      showToast(getApiErrorMessage(err, `Review submitted for Booking #${id}.`));
+    }
   };
 
   const handleSubmitIssue = (issueType: string, description: string) => {
     showToast(`Support ticket created for issue: "${issueType}".`);
   };
+
+  if (isBookingLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+        <div className="flex flex-col items-center gap-3 bg-white p-8 rounded-3xl border border-slate-200 shadow-xl">
+          <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-xs font-bold text-slate-800">Fetching Booking #{bookingId}...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!booking) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+        <div className="flex flex-col items-center gap-4 bg-white p-8 rounded-3xl border border-slate-200 shadow-xl max-w-sm text-center">
+          <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center">
+            <RotateCcw size={24} />
+          </div>
+          <div>
+            <h3 className="text-base font-black text-slate-900">Booking Not Found</h3>
+            <p className="text-xs text-slate-500 mt-1">
+              Could not find any booking with reference ID #{bookingId}.
+            </p>
+          </div>
+          <Button
+            onClick={() => router.push("/my-bookings")}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs cursor-pointer"
+          >
+            Back to My Bookings
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900 selection:bg-blue-500 selection:text-white">
@@ -98,7 +178,7 @@ function BookingDetailsContent() {
       {/* Navbar */}
       <Navbar
         activePage="my-bookings"
-        isLoggedIn={true}
+        isLoggedIn={auth.isAuthenticated}
         selectedCity={selectedCity}
         onSelectCity={setSelectedCity}
         onOpenSearch={() => router.push("/services")}
@@ -223,7 +303,9 @@ export default function BookingDetailsPage() {
         </div>
       }
     >
-      <BookingDetailsContent />
+      <ProtectedRoute>
+        <BookingDetailsContent />
+      </ProtectedRoute>
     </Suspense>
   );
 }

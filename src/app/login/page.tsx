@@ -6,16 +6,22 @@ import { useRouter } from "next/navigation";
 import { AuthIllustration } from "@/components/auth/AuthIllustration";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { CheckCircle2, ChevronLeft } from "@/components/icons/Icons";
+import { useAppSelector } from "@/store/hooks";
 
 function LoginContent() {
   const router = useRouter();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const auth = useAppSelector((state) => state.auth);
 
-  const handleSuccessLogin = (email: string) => {
-    setToastMessage(`Welcome back! Successfully logged in as ${email}`);
+  const handleSuccessLogin = (displayName: string) => {
+    setToastMessage(`Welcome back! Successfully logged in as ${displayName}`);
     setTimeout(() => {
-      router.push("/profile");
-    }, 1200);
+      if (auth.user?.role === "provider") {
+        router.push("/provider/dashboard");
+      } else {
+        router.push("/profile");
+      }
+    }, 1000);
   };
 
   return (
@@ -60,10 +66,7 @@ export default function LoginPage() {
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center bg-slate-50">
-          <div className="flex items-center gap-3 text-slate-600 font-bold">
-            <div className="w-6 h-6 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
-            <span>Loading Sahayak Login...</span>
-          </div>
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
         </div>
       }
     >
