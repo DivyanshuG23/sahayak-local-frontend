@@ -17,6 +17,14 @@ import {
   clearStoredProviderProfile,
   convertOnboardingToProviderProfile,
 } from "@/features/provider/providerStorage";
+import { useAppSelector } from "@/store/hooks";
+import {
+  useGetMyProviderProfileQuery,
+  useGetAvailabilityQuery,
+  useUpdateAvailabilityMutation,
+  useUpdateMyProviderProfileMutation,
+} from "@/services/provider.service";
+import { getApiErrorMessage } from "@/lib/errorUtils";
 
 interface ProviderContextType {
   provider: ProviderBusinessProfile;
@@ -28,6 +36,7 @@ interface ProviderContextType {
   saveOnboardingData: (data: OnboardingFormData) => void;
   updateProviderProfile: (fields: Partial<ProviderBusinessProfile>) => void;
   resetToDefaultProfile: () => void;
+  refetchProfile?: () => void;
 }
 
 const ProviderContext = createContext<ProviderContextType | undefined>(undefined);
@@ -47,20 +56,72 @@ interface ProviderShellProps {
 export const ProviderShell: React.FC<ProviderShellProps> = ({ children }) => {
   const pathname = usePathname();
   const isOnboarding = pathname === "/provider/onboarding" || pathname?.startsWith("/provider/onboarding");
+  const auth = useAppSelector((state) => state.auth);
 
   const [provider, setProvider] = useState<ProviderBusinessProfile>(CURRENT_PROVIDER);
   const [isOnline, setIsOnline] = useState<boolean>(CURRENT_PROVIDER.availability === "available");
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Hydrate provider from localStorage upon client mount (safe against SSR hydration mismatch)
+  // Live Backend Queries & Mutations
+  const {
+    data: liveProfileData,
+    refetch: refetchProfile,
+  } = useGetMyProviderProfileQuery(undefined, {
+    skip: !auth.isAuthenticated,
+  });
+
+  const { data: liveAvailabilityData } = useGetAvailabilityQuery(undefined, {
+    skip: !auth.isAuthenticated,
+  });
+
+  const [updateAvailabilityApi] = useUpdateAvailabilityMutation();
+  const [updateProfileApi] = useUpdateMyProviderProfileMutation();
+
+  // Hydrate provider from live backend profile or localStorage upon client mount
   useEffect(() => {
-    const stored = getStoredProviderProfile();
-    if (stored) {
-      setProvider(stored);
-      setIsOnline(stored.availability === "available");
+    if (liveProfileData?.data) {
+      const p = liveProfileData.data;
+      const mappedProfile: ProviderBusinessProfile = {
+        id: p._id || p.id || provider.id,
+        businessName: p.businessName || provider.businessName,
+        ownerName: p.ownerName || p.userId?.fullName || provider.ownerName,
+        phone: p.userId?.phone || provider.phone,
+        email: p.userId?.email || provider.email,
+        avatarUrl: p.userId?.avatar || provider.avatarUrl,
+        category: p.category || provider.category,
+        categoryId: p.categoryId || provider.categoryId,
+        city: p.city || provider.city,
+        locality: p.locality || p.city || provider.locality,
+        address: p.address || provider.address,
+        experienceYears: p.experienceYears ?? provider.experienceYears,
+        completedJobs: p.completedJobs ?? provider.completedJobs,
+        rating: p.rating ?? provider.rating,
+        reviewCount: p.reviewCount ?? provider.reviewCount,
+        about: p.bio || provider.about,
+        kycStatus: p.kyc?.isVerified ? "verified" : (p.kyc?.documents?.length ? "pending" : "action_required"),
+        availability: p.isOnline ? "available" : "offline",
+        serviceRadiusKm: p.serviceRadiusKm ?? provider.serviceRadiusKm,
+        workingHours: p.workingHours || provider.workingHours,
+        badgeText: p.badgeText || "Verified Partner",
+        activeServicesCount: p.services?.length ?? provider.activeServicesCount,
+      };
+      setProvider(mappedProfile);
+      saveStoredProviderProfile(mappedProfile);
+    } else {
+      const stored = getStoredProviderProfile();
+      if (stored) {
+        setProvider(stored);
+        setIsOnline(stored.availability === "available");
+      }
     }
-  }, []);
+  }, [liveProfileData]);
+
+  useEffect(() => {
+    if (liveAvailabilityData?.data) {
+      setIsOnline(Boolean(liveAvailabilityData.data.isOnline));
+    }
+  }, [liveAvailabilityData]);
 
   const showToast = (message: string) => {
     setToastMessage(message);
@@ -69,7 +130,7 @@ export const ProviderShell: React.FC<ProviderShellProps> = ({ children }) => {
     }, 4000);
   };
 
-  const toggleAvailability = () => {
+  const toggleAvailability = async () => {
     const nextState = !isOnline;
     setIsOnline(nextState);
     const updatedProfile: ProviderBusinessProfile = {
@@ -78,6 +139,14 @@ export const ProviderShell: React.FC<ProviderShellProps> = ({ children }) => {
     };
     setProvider(updatedProfile);
     saveStoredProviderProfile(updatedProfile);
+
+    if (auth.isAuthenticated) {
+      try {
+        await updateAvailabilityApi({ isOnline: nextState }).unwrap();
+      } catch (err: any) {
+        console.warn("Failed to sync availability status to server", err);
+      }
+    }
 
     showToast(
       nextState
@@ -92,13 +161,34 @@ export const ProviderShell: React.FC<ProviderShellProps> = ({ children }) => {
     saveStoredProviderProfile(newProfile);
   };
 
-  const updateProviderProfile = (fields: Partial<ProviderBusinessProfile>) => {
+  const updateProviderProfile = async (fields: Partial<ProviderBusinessProfile>) => {
     const updatedProfile: ProviderBusinessProfile = {
       ...provider,
       ...fields,
     };
     setProvider(updatedProfile);
     saveStoredProviderProfile(updatedProfile);
+
+    if (auth.isAuthenticated) {
+      try {
+        await updateProfileApi({
+          businessName: fields.businessName,
+          ownerName: fields.ownerName,
+          category: fields.category,
+          city: fields.city,
+          address: fields.address,
+          experienceYears: fields.experienceYears,
+          bio: fields.about,
+        }).unwrap();
+        showToast("Profile synced with live server!");
+        return;
+      } catch (err: any) {
+        showToast(getApiErrorMessage(err, "Saved locally. Server sync failed."));
+        return;
+      }
+    }
+
+    showToast("Profile details updated successfully!");
   };
 
   const resetToDefaultProfile = () => {
@@ -121,6 +211,7 @@ export const ProviderShell: React.FC<ProviderShellProps> = ({ children }) => {
           saveOnboardingData,
           updateProviderProfile,
           resetToDefaultProfile,
+          refetchProfile,
         }}
       >
         <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900 selection:bg-blue-500 selection:text-white">
@@ -149,7 +240,9 @@ export const ProviderShell: React.FC<ProviderShellProps> = ({ children }) => {
               <div className="flex items-center gap-3">
                 <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/70">
                   <Phone size={13} className="text-blue-600" />
-                  <span>Partner Desk: <strong>1800-123-SAHAYAK</strong></span>
+                  <span>
+                    Partner Desk: <strong>1800-123-SAHAYAK</strong>
+                  </span>
                 </div>
                 <Link
                   href="/"
@@ -190,6 +283,7 @@ export const ProviderShell: React.FC<ProviderShellProps> = ({ children }) => {
         saveOnboardingData,
         updateProviderProfile,
         resetToDefaultProfile,
+        refetchProfile,
       }}
     >
       <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900 selection:bg-blue-500 selection:text-white">

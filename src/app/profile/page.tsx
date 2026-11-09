@@ -31,6 +31,7 @@ import {
 import {
   useGetAddressesQuery,
   useCreateAddressMutation,
+  useUpdateAddressMutation,
   useDeleteAddressMutation,
   useSetDefaultAddressMutation,
 } from "@/services/address.service";

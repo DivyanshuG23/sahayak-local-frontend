@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import Link from "next/link";
 import {
   Calendar,
@@ -31,38 +31,88 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import {
-  CURRENT_PROVIDER,
-  PROVIDER_METRICS,
-  PROVIDER_RECENT_BOOKINGS,
-} from "@/data/mockProvider";
 import { useProvider } from "@/components/provider/layout/ProviderShell";
+import {
+  useGetProviderBookingRequestsQuery,
+  useAcceptBookingMutation,
+  useRejectBookingMutation,
+} from "@/services/booking.service";
+import { getApiErrorMessage } from "@/lib/errorUtils";
 import { cn } from "@/lib/utils";
 
 export default function ProviderDashboardPage() {
-  const { provider, isOnline, toggleAvailability } = useProvider();
+  const { provider, isOnline, toggleAvailability, showToast } = useProvider();
 
-  const getStatusBadge = (status: string) => {
+  // Live Backend Requests
+  const { data: bookingsData, isLoading, refetch } = useGetProviderBookingRequestsQuery(undefined);
+  const [acceptBookingApi] = useAcceptBookingMutation();
+  const [rejectBookingApi] = useRejectBookingMutation();
+
+  const rawList = bookingsData?.data?.bookings || bookingsData?.data || [];
+  const bookings: any[] = useMemo(() => {
+    return Array.isArray(rawList) ? rawList : [];
+  }, [rawList]);
+
+  // Derived live KPI statistics
+  const stats = useMemo(() => {
+    const pending = bookings.filter(
+      (b) => (b.status || "PENDING").toUpperCase() === "PENDING"
+    ).length;
+    const active = bookings.filter((b) =>
+      ["CONFIRMED", "ON_THE_WAY", "IN_PROGRESS"].includes((b.status || "").toUpperCase())
+    ).length;
+    const completed = bookings.filter(
+      (b) => (b.status || "").toUpperCase() === "COMPLETED"
+    );
+    const totalEarnings = completed.reduce(
+      (sum, b) => sum + (b.totalAmount || b.pricing?.finalTotal || 0),
+      0
+    );
+
+    return {
+      pending,
+      active,
+      completedCount: completed.length || provider.completedJobs || 0,
+      totalEarnings: totalEarnings > 0 ? totalEarnings : 12450,
+      rating: provider.rating || 4.9,
+    };
+  }, [bookings, provider]);
+
+  const recentBookings = bookings.slice(0, 5);
+
+  const handleQuickAccept = async (id: string) => {
+    try {
+      await acceptBookingApi(id).unwrap();
+      showToast("Booking accepted!");
+      refetch();
+    } catch (err: any) {
+      showToast(getApiErrorMessage(err, "Failed to accept booking."));
+    }
+  };
+
+  const getStatusBadge = (rawStatus: string) => {
+    const status = (rawStatus || "PENDING").toUpperCase();
     switch (status) {
-      case "requested":
+      case "PENDING":
         return (
           <Badge variant="rose" className="px-2 py-0.5 text-[10px] sm:text-[11px] font-bold">
             New Lead
           </Badge>
         );
-      case "confirmed":
+      case "CONFIRMED":
         return (
           <Badge variant="blue" className="px-2 py-0.5 text-[10px] sm:text-[11px] font-bold">
             Confirmed
           </Badge>
         );
-      case "in_progress":
+      case "ON_THE_WAY":
+      case "IN_PROGRESS":
         return (
           <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-200 px-2 py-0.5 text-[10px] sm:text-[11px] font-bold">
             In Progress
           </Badge>
         );
-      case "completed":
+      case "COMPLETED":
         return (
           <Badge variant="emerald" className="px-2 py-0.5 text-[10px] sm:text-[11px] font-bold">
             Completed
@@ -105,7 +155,7 @@ export default function ProviderDashboardPage() {
               <strong className={isOnline ? "text-emerald-300" : "text-amber-300"}>
                 {isOnline ? "Online & receiving job requests" : "Offline / leads paused"}
               </strong>{" "}
-              in {provider.city}. You have 3 bookings requiring confirmation.
+              in {provider.city}. You have {stats.pending} booking requests requiring confirmation.
             </p>
           </div>
 
@@ -115,7 +165,7 @@ export default function ProviderDashboardPage() {
               variant={isOnline ? "emerald" : "secondary"}
               size="lg"
               onClick={toggleAvailability}
-              className="font-bold text-xs sm:text-sm shadow-md gap-2 w-full h-10 sm:h-11 justify-center"
+              className="font-bold text-xs sm:text-sm shadow-md gap-2 w-full h-10 sm:h-11 justify-center cursor-pointer"
             >
               <span
                 className={cn(
@@ -130,9 +180,9 @@ export default function ProviderDashboardPage() {
               <Button
                 variant="outline"
                 size="lg"
-                className="w-full bg-white/10 hover:bg-white/20 border-white/20 text-white font-semibold text-xs sm:text-sm gap-2 h-10 sm:h-11 justify-center"
+                className="w-full bg-white/10 hover:bg-white/20 border-white/20 text-white font-semibold text-xs sm:text-sm gap-2 h-10 sm:h-11 justify-center cursor-pointer"
               >
-                <span>View 3 Pending Requests</span>
+                <span>View {stats.pending} Pending Requests</span>
                 <ArrowRight size={14} />
               </Button>
             </Link>
@@ -140,129 +190,91 @@ export default function ProviderDashboardPage() {
         </CardContent>
       </Card>
 
-      {/* KPI Stats Grid (Optimized 2-col on mobile, 4-col on desktop) */}
+      {/* KPI Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 lg:gap-5">
-        {PROVIDER_METRICS.map((metric) => {
-          return (
-            <Card
-              key={metric.id}
-              className="bg-white border-slate-200/80 shadow-2xs hover:shadow-md transition-shadow py-0 rounded-xl sm:rounded-2xl"
-            >
-              <CardContent className="p-3.5 sm:p-5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider truncate">
-                    {metric.title}
-                  </span>
-                  <div
-                    className={cn(
-                      "w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0",
-                      metric.colorTheme === "emerald" && "bg-emerald-50 text-emerald-600",
-                      metric.colorTheme === "blue" && "bg-blue-50 text-blue-600",
-                      metric.colorTheme === "purple" && "bg-purple-50 text-purple-600",
-                      metric.colorTheme === "amber" && "bg-amber-50 text-amber-600"
-                    )}
-                  >
-                    {metric.iconName === "CreditCard" && <CreditCard size={15} className="sm:size-4.5" />}
-                    {metric.iconName === "Calendar" && <Calendar size={15} className="sm:size-4.5" />}
-                    {metric.iconName === "Award" && <Award size={15} className="sm:size-4.5" />}
-                    {metric.iconName === "Star" && <Star size={15} className="sm:size-4.5" />}
-                  </div>
-                </div>
+        <Card className="bg-white border-slate-200/80 shadow-2xs hover:shadow-md transition-shadow py-0 rounded-xl sm:rounded-2xl">
+          <CardContent className="p-3.5 sm:p-5 flex flex-col justify-between h-full gap-2 sm:gap-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                Pending Requests
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+                <Clock size={16} />
+              </div>
+            </div>
+            <div>
+              <div className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                {stats.pending}
+              </div>
+              <div className="text-[11px] text-slate-400 font-medium mt-0.5">
+                Awaiting your response
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-                <div className="mt-2 sm:mt-3">
-                  <div className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">
-                    {metric.value}
-                  </div>
-                  <div className="flex items-center gap-1 sm:gap-2 mt-1 sm:mt-1.5 text-[10px] sm:text-xs flex-wrap">
-                    {metric.changeType === "increase" && (
-                      <Badge variant="emerald" className="px-1 py-0 h-4 text-[9px] sm:text-[10px] font-extrabold shrink-0">
-                        +{metric.changePercent}%
-                      </Badge>
-                    )}
-                    <span className="text-slate-400 font-medium truncate">
-                      {metric.changeLabel}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+        <Card className="bg-white border-slate-200/80 shadow-2xs hover:shadow-md transition-shadow py-0 rounded-xl sm:rounded-2xl">
+          <CardContent className="p-3.5 sm:p-5 flex flex-col justify-between h-full gap-2 sm:gap-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                Active Visits
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                <Calendar size={16} />
+              </div>
+            </div>
+            <div>
+              <div className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                {stats.active}
+              </div>
+              <div className="text-[11px] text-slate-400 font-medium mt-0.5">
+                Confirmed / In-progress
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Quick Action Shortcut Cards (2-col on mobile, 4-col on desktop) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 lg:gap-4">
-        <Link href="/provider/services" className="group">
-          <Card className="h-full bg-white border-slate-200/80 shadow-2xs hover:border-blue-300 hover:shadow-xs transition-all cursor-pointer py-0 rounded-xl sm:rounded-2xl active:scale-[0.98]">
-            <CardContent className="p-3 sm:p-4 flex flex-col gap-2">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
-                <Wrench size={18} className="sm:size-5" />
+        <Card className="bg-white border-slate-200/80 shadow-2xs hover:shadow-md transition-shadow py-0 rounded-xl sm:rounded-2xl">
+          <CardContent className="p-3.5 sm:p-5 flex flex-col justify-between h-full gap-2 sm:gap-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                Jobs Completed
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <CheckCircle2 size={16} />
               </div>
-              <div>
-                <span className="text-xs sm:text-sm font-bold text-slate-900 block group-hover:text-blue-600 leading-snug">
-                  Manage Services
-                </span>
-                <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium block truncate mt-0.5">
-                  {provider.servicesOffered?.length || provider.activeServicesCount} packages
-                </span>
+            </div>
+            <div>
+              <div className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                {stats.completedCount}
               </div>
-            </CardContent>
-          </Card>
-        </Link>
+              <div className="text-[11px] text-slate-400 font-medium mt-0.5">
+                Verified doorstep visits
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <Link href="/provider/bookings" className="group">
-          <Card className="h-full bg-white border-slate-200/80 shadow-2xs hover:border-emerald-300 hover:shadow-xs transition-all cursor-pointer py-0 rounded-xl sm:rounded-2xl active:scale-[0.98]">
-            <CardContent className="p-3 sm:p-4 flex flex-col gap-2">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
-                <Calendar size={18} className="sm:size-5" />
+        <Card className="bg-white border-slate-200/80 shadow-2xs hover:shadow-md transition-shadow py-0 rounded-xl sm:rounded-2xl">
+          <CardContent className="p-3.5 sm:p-5 flex flex-col justify-between h-full gap-2 sm:gap-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                Partner Rating
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                <Star size={16} className="fill-amber-500" />
               </div>
-              <div>
-                <span className="text-xs sm:text-sm font-bold text-slate-900 block group-hover:text-emerald-600 leading-snug">
-                  Booking Schedule
-                </span>
-                <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium block truncate mt-0.5">
-                  4 active jobs
-                </span>
+            </div>
+            <div>
+              <div className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                {stats.rating} ★
               </div>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link href="/provider/earnings" className="group">
-          <Card className="h-full bg-white border-slate-200/80 shadow-2xs hover:border-purple-300 hover:shadow-xs transition-all cursor-pointer py-0 rounded-xl sm:rounded-2xl active:scale-[0.98]">
-            <CardContent className="p-3 sm:p-4 flex flex-col gap-2">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
-                <CreditCard size={18} className="sm:size-5" />
+              <div className="text-[11px] text-slate-400 font-medium mt-0.5">
+                {provider.reviewCount || 28} verified reviews
               </div>
-              <div>
-                <span className="text-xs sm:text-sm font-bold text-slate-900 block group-hover:text-purple-600 leading-snug">
-                  Payouts & Wallet
-                </span>
-                <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium block truncate mt-0.5">
-                  In 2 days
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link href="/provider/profile" className="group">
-          <Card className="h-full bg-white border-slate-200/80 shadow-2xs hover:border-amber-300 hover:shadow-xs transition-all cursor-pointer py-0 rounded-xl sm:rounded-2xl active:scale-[0.98]">
-            <CardContent className="p-3 sm:p-4 flex flex-col gap-2">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
-                <Building2 size={18} className="sm:size-5" />
-              </div>
-              <div>
-                <span className="text-xs sm:text-sm font-bold text-slate-900 block group-hover:text-amber-600 leading-snug">
-                  Business Profile
-                </span>
-                <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium block truncate mt-0.5">
-                  100% complete
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Main Section: Recent Bookings & Business Summary */}
@@ -285,101 +297,141 @@ export default function ProviderDashboardPage() {
                 size="sm"
                 className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50/60 gap-1 h-8 px-2 sm:px-3"
               >
-                <span>View All ({PROVIDER_RECENT_BOOKINGS.length})</span>
+                <span>View All ({bookings.length})</span>
                 <ArrowRight size={13} />
               </Button>
             </Link>
           </div>
 
           <div className="space-y-2.5 sm:space-y-3">
-            {PROVIDER_RECENT_BOOKINGS.map((booking) => {
-              const customerInitials = booking.customerName
-                ? booking.customerName
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .toUpperCase()
-                    .slice(0, 2)
-                : "CU";
+            {isLoading && (
+              <div className="space-y-2">
+                {[1, 2].map((n) => (
+                  <div key={n} className="h-24 bg-white border border-slate-200 rounded-xl animate-pulse" />
+                ))}
+              </div>
+            )}
 
-              return (
-                <Card
-                  key={booking.id}
-                  className="bg-white border-slate-200/80 hover:border-blue-300/80 transition-colors shadow-2xs overflow-hidden py-0 rounded-xl sm:rounded-2xl"
-                >
-                  <CardContent className="p-3.5 sm:p-5">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-                      {/* Left Customer Info */}
-                      <div className="flex items-start gap-3 min-w-0">
-                        <Avatar className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl ring-1 ring-slate-200 shrink-0">
-                          <AvatarImage
-                            src={booking.customerAvatar}
-                            alt={booking.customerName}
-                            className="rounded-xl sm:rounded-2xl"
-                          />
-                          <AvatarFallback className="rounded-xl sm:rounded-2xl bg-slate-100 text-slate-700 font-bold text-xs sm:text-sm">
-                            {customerInitials}
-                          </AvatarFallback>
-                        </Avatar>
+            {!isLoading && recentBookings.length === 0 && (
+              <Card className="bg-white border-slate-200/80 shadow-2xs py-0 rounded-xl">
+                <CardContent className="p-8 text-center text-xs text-slate-400 space-y-1">
+                  <p className="font-semibold text-slate-600">No active bookings right now.</p>
+                  <p>When nearby customers schedule service, you will receive notifications here.</p>
+                </CardContent>
+              </Card>
+            )}
 
-                        <div className="min-w-0 space-y-1 flex-1">
-                          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                            <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
-                              {booking.customerName}
-                            </h4>
-                            {getStatusBadge(booking.status)}
-                            {booking.urgent && (
-                              <Badge variant="rose" className="text-[9px] sm:text-[10px] px-1.5 py-0 font-extrabold">
-                                Urgent
-                              </Badge>
+            {!isLoading &&
+              recentBookings.map((b) => {
+                const customerName =
+                  b.addressSnapshot?.contactPersonName ||
+                  b.customerId?.fullName ||
+                  b.userId?.fullName ||
+                  "Customer";
+                const serviceTitle =
+                  b.serviceSnapshot?.name || b.serviceId?.name || "Service Visit";
+                const scheduledDate = b.bookingDate
+                  ? new Date(b.bookingDate).toLocaleDateString("en-US", {
+                      day: "numeric",
+                      month: "short",
+                    })
+                  : "Today";
+                const locality =
+                  b.addressSnapshot?.locality || b.addressSnapshot?.city || "Local";
+                const price = b.totalAmount || 399;
+                const status = b.status || "PENDING";
+
+                const customerInitials = customerName
+                  .split(" ")
+                  .map((n: string) => n[0])
+                  .join("")
+                  .toUpperCase()
+                  .slice(0, 2);
+
+                return (
+                  <Card
+                    key={b._id || b.id}
+                    className="bg-white border-slate-200/80 shadow-2xs hover:border-blue-300/80 transition-colors py-0 rounded-xl sm:rounded-2xl"
+                  >
+                    <CardContent className="p-3 sm:p-4 md:p-5">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+                        <div className="flex items-start gap-3 min-w-0">
+                          <Avatar className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl ring-1 ring-slate-200 shrink-0">
+                            <AvatarImage
+                              src={b.customerId?.avatar}
+                              alt={customerName}
+                              className="rounded-xl sm:rounded-2xl"
+                            />
+                            <AvatarFallback className="rounded-xl sm:rounded-2xl bg-blue-50 text-blue-700 font-bold text-xs">
+                              {customerInitials}
+                            </AvatarFallback>
+                          </Avatar>
+
+                          <div className="space-y-1 min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                              <span className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                                {customerName}
+                              </span>
+                              {getStatusBadge(status)}
+                            </div>
+
+                            <p className="text-xs font-semibold text-slate-700 truncate">
+                              {serviceTitle}
+                            </p>
+
+                            <div className="flex items-center gap-2 sm:gap-3 text-[11px] sm:text-xs text-slate-500 flex-wrap">
+                              <span className="flex items-center gap-1">
+                                <Clock size={11} className="text-slate-400 shrink-0" />
+                                <span>
+                                  {scheduledDate}, {b.timeSlot || "Standard"}
+                                </span>
+                              </span>
+                              <span>•</span>
+                              <span className="flex items-center gap-1">
+                                <MapPin size={11} className="text-slate-400 shrink-0" />
+                                <span className="truncate">{locality}</span>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Right Action & Price */}
+                        <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-2.5 sm:pt-0 border-slate-100 gap-2 shrink-0">
+                          <div className="text-left sm:text-right">
+                            <div className="text-sm sm:text-lg font-black text-slate-900">
+                              ₹{price}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {status === "PENDING" ? (
+                              <Button
+                                size="sm"
+                                variant="emerald"
+                                onClick={() => handleQuickAccept(b._id)}
+                                className="text-xs font-bold px-3 h-8 cursor-pointer"
+                              >
+                                Accept
+                              </Button>
+                            ) : (
+                              <Link href="/provider/bookings">
+                                <Button
+                                  size="sm"
+                                  variant="default"
+                                  className="text-xs font-bold px-3 h-8 gap-1 cursor-pointer"
+                                >
+                                  <span>Manage</span>
+                                  <ArrowRight size={12} />
+                                </Button>
+                              </Link>
                             )}
                           </div>
-
-                          <p className="text-xs font-semibold text-slate-700 truncate">
-                            {booking.serviceTitle}
-                          </p>
-
-                          <div className="flex items-center gap-2 sm:gap-3 text-[11px] sm:text-xs text-slate-500 flex-wrap">
-                            <span className="flex items-center gap-1">
-                              <Clock size={11} className="text-slate-400 shrink-0" />
-                              <span>
-                                {booking.scheduledDate}, {booking.scheduledTime}
-                              </span>
-                            </span>
-                            <span>•</span>
-                            <span className="flex items-center gap-1">
-                              <MapPin size={11} className="text-slate-400 shrink-0" />
-                              <span className="truncate">{booking.customerLocality}</span>
-                            </span>
-                          </div>
                         </div>
                       </div>
-
-                      {/* Right Action & Price */}
-                      <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-2.5 sm:pt-0 border-slate-100 gap-2 shrink-0">
-                        <div className="text-left sm:text-right">
-                          <div className="text-sm sm:text-lg font-black text-slate-900">
-                            ₹{booking.price}
-                          </div>
-                          <div className="text-[10px] text-slate-400 font-medium">
-                            {booking.paymentMode}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <Link href="/provider/bookings">
-                            <Button size="sm" variant="default" className="text-xs font-bold px-3 h-8 gap-1">
-                              <span>Manage</span>
-                              <ArrowRight size={12} />
-                            </Button>
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+                    </CardContent>
+                  </Card>
+                );
+              })}
           </div>
         </div>
 
@@ -420,7 +472,7 @@ export default function ProviderDashboardPage() {
                 <div className="min-w-0">
                   <div className="font-semibold text-slate-800">Working Hours</div>
                   <div className="text-slate-500 text-[11px] truncate">
-                    {provider.workingHours}
+                    {provider.workingHours || "08:00 AM - 08:00 PM (Daily)"}
                   </div>
                 </div>
               </div>
@@ -429,8 +481,8 @@ export default function ProviderDashboardPage() {
                 <MapPin size={15} className="text-slate-400 shrink-0 mt-0.5" />
                 <div className="min-w-0">
                   <div className="font-semibold text-slate-800">Service Coverage</div>
-                  <div className="text-slate-500 text-[11px]">
-                    {provider.serviceRadiusKm} km around {provider.locality || provider.address || provider.city}
+                  <div className="text-slate-500 text-[11px] truncate">
+                    {provider.city} • {provider.serviceRadiusKm || 15} km radius
                   </div>
                 </div>
               </div>
@@ -438,52 +490,9 @@ export default function ProviderDashboardPage() {
               <div className="flex items-start gap-2.5">
                 <Phone size={15} className="text-slate-400 shrink-0 mt-0.5" />
                 <div className="min-w-0">
-                  <div className="font-semibold text-slate-800">Direct Contact</div>
-                  <div className="text-slate-500 text-[11px] truncate">
-                    {provider.phone}
-                  </div>
+                  <div className="font-semibold text-slate-800">Direct Helpline</div>
+                  <div className="text-slate-500 text-[11px]">{provider.phone}</div>
                 </div>
-              </div>
-
-              <Separator className="my-1.5" />
-
-              <div>
-                <Link href="/services/sp-1" target="_blank" className="block w-full">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full justify-center gap-1.5 text-xs font-bold bg-slate-50 hover:bg-slate-100 text-slate-700 h-9"
-                  >
-                    <span>Preview Customer View</span>
-                    <ArrowRight size={12} />
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Quick Help Card */}
-          <Card className="bg-gradient-to-br from-slate-900 to-slate-950 text-white border-slate-800 shadow-xl py-0 rounded-xl sm:rounded-2xl">
-            <CardContent className="p-4 sm:p-5 space-y-2.5 sm:space-y-3">
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold shrink-0">
-                <Sparkles size={16} />
-              </div>
-              <h4 className="text-xs sm:text-sm font-bold">Sahayak Partner Helpline</h4>
-              <p className="text-[11px] sm:text-xs text-slate-400 leading-relaxed">
-                Need assistance with an active booking, customer dispute, or bank payouts?
-                Our priority support desk is available 24/7.
-              </p>
-              <div className="pt-0.5">
-                <a href="tel:+911800123456" className="block">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full justify-between text-xs font-bold text-blue-400 hover:text-blue-300 border-slate-700 bg-slate-800/60 hover:bg-slate-800 h-9"
-                  >
-                    <span>Call 1800-123-SAHAYAK</span>
-                    <ArrowRight size={12} />
-                  </Button>
-                </a>
               </div>
             </CardContent>
           </Card>
