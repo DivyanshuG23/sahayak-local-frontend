@@ -7,5 +7,6 @@ export * from "./address.service";
 export * from "./payment.service";
 export * from "./review.service";
 export * from "./upload.service";
+export * from "./provider.service";
 export * from "@/types/api.types";
 export * from "@/lib/errorUtils";

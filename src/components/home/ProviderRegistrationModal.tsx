@@ -2,10 +2,13 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { X, Building2, ShieldCheck, CheckCircle2, UserCheck } from "../icons/Icons";
-import { CATEGORIES, CITIES } from "../../data/mockData";
+import { X, Building2, ShieldCheck, CheckCircle2, UserCheck, AlertCircle } from "../icons/Icons";
+import { CITIES } from "../../data/mockData";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
+import { useRegisterProviderMutation } from "@/services/auth.service";
+import { useGetCategoriesQuery } from "@/services/category.service";
+import { getApiErrorMessage } from "@/lib/errorUtils";
 
 interface ProviderRegistrationModalProps {
   isOpen: boolean;
@@ -16,26 +19,63 @@ interface ProviderRegistrationModalProps {
 export const ProviderRegistrationModal: React.FC<ProviderRegistrationModalProps> = ({
   isOpen,
   onClose,
-  onSuccess
+  onSuccess,
 }) => {
   const [businessName, setBusinessName] = useState("");
   const [ownerName, setOwnerName] = useState("");
-  const [category, setCategory] = useState("Electrician");
+  const [category, setCategory] = useState("");
   const [city, setCity] = useState("Jaipur, Rajasthan");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const [registerProviderApi, { isLoading }] = useRegisterProviderMutation();
+  const { data: categoriesData } = useGetCategoriesQuery(undefined);
+
+  const categories = categoriesData?.data?.categories || categoriesData?.data || [];
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!businessName || !ownerName || !phone) return;
-    setSubmitted(true);
-    setTimeout(() => {
-      onSuccess?.(businessName);
-      setSubmitted(false);
-      onClose();
-    }, 1500);
+    setErrorMessage(null);
+
+    const cleanPhone = phone.replace(/[^0-9]/g, "").slice(-10);
+    if (cleanPhone.length !== 10) {
+      setErrorMessage("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+
+    const effectiveCategory =
+      category || (categories[0]?.name ? categories[0].name : "Electrician");
+    const generatedEmail =
+      email.trim() || `partner.${cleanPhone}@sahayaklocal.in`;
+    const generatedPassword = password.trim() || `Sahayak@${cleanPhone.slice(-4)}`;
+
+    try {
+      await registerProviderApi({
+        businessName: businessName.trim(),
+        ownerName: ownerName.trim(),
+        fullName: ownerName.trim(),
+        category: effectiveCategory,
+        city: city.trim(),
+        phone: cleanPhone,
+        email: generatedEmail,
+        password: generatedPassword,
+        experienceYears: 2,
+      }).unwrap();
+
+      setSubmitted(true);
+      setTimeout(() => {
+        onSuccess?.(businessName);
+        setSubmitted(false);
+        onClose();
+      }, 2000);
+    } catch (err: any) {
+      setErrorMessage(getApiErrorMessage(err, "Failed to register provider account."));
+    }
   };
 
   return (
@@ -43,7 +83,6 @@ export const ProviderRegistrationModal: React.FC<ProviderRegistrationModalProps>
       <div className="fixed inset-0" onClick={onClose} />
 
       <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden z-10 border border-slate-200 p-6 sm:p-8 space-y-6">
-        
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
@@ -53,7 +92,9 @@ export const ProviderRegistrationModal: React.FC<ProviderRegistrationModalProps>
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-xl font-bold text-slate-900">Join as a Local Provider</h2>
-                <Badge variant="emerald" className="text-[10px] px-1.5 py-0">Free Partner</Badge>
+                <Badge variant="emerald" className="text-[10px] px-1.5 py-0">
+                  Free Partner
+                </Badge>
               </div>
               <p className="text-xs text-slate-500">Register your business & start receiving leads</p>
             </div>
@@ -70,21 +111,28 @@ export const ProviderRegistrationModal: React.FC<ProviderRegistrationModalProps>
           </Button>
         </div>
 
+        {errorMessage && (
+          <div className="bg-rose-50 border border-rose-200 text-rose-700 p-3 rounded-xl flex items-center gap-2 text-xs">
+            <AlertCircle size={16} className="shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
         {submitted ? (
           <div className="bg-emerald-500 text-white p-6 rounded-2xl text-center space-y-2 animate-in zoom-in-95 shadow-lg">
             <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mx-auto">
               <CheckCircle2 size={28} />
             </div>
-            <h3 className="text-xl font-extrabold">Application Submitted!</h3>
+            <h3 className="text-xl font-extrabold">Application Registered!</h3>
             <p className="text-xs text-emerald-100">
-              Our partner verification team will contact you on <strong>{phone}</strong> within 2 hours.
+              Welcome to Sahayak-Local! Your provider dashboard is ready.
             </p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                Business / Shop Name
+                Business / Shop Name *
               </label>
               <input
                 type="text"
@@ -99,7 +147,7 @@ export const ProviderRegistrationModal: React.FC<ProviderRegistrationModalProps>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                  Owner / Contact Name
+                  Owner / Contact Name *
                 </label>
                 <input
                   type="text"
@@ -113,15 +161,16 @@ export const ProviderRegistrationModal: React.FC<ProviderRegistrationModalProps>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                  Primary Category
+                  Primary Category *
                 </label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   className="w-full text-xs font-medium bg-slate-50 border border-slate-200 rounded-xl p-3 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 >
-                  {CATEGORIES.map((c) => (
-                    <option key={c.id} value={c.name}>
+                  <option value="">Select Category</option>
+                  {categories.map((c: any) => (
+                    <option key={c._id || c.id || c.name} value={c.name}>
                       {c.name}
                     </option>
                   ))}
@@ -132,7 +181,7 @@ export const ProviderRegistrationModal: React.FC<ProviderRegistrationModalProps>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                  City Location
+                  City Location *
                 </label>
                 <select
                   value={city}
@@ -149,14 +198,42 @@ export const ProviderRegistrationModal: React.FC<ProviderRegistrationModalProps>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                  WhatsApp Mobile No.
+                  WhatsApp Mobile No. *
                 </label>
                 <input
                   type="tel"
                   required
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+91 98765 43210"
+                  placeholder="9876543210"
+                  className="w-full text-xs font-medium bg-slate-50 border border-slate-200 rounded-xl p-3 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Email Address (Optional)
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="partner@example.com"
+                  className="w-full text-xs font-medium bg-slate-50 border border-slate-200 rounded-xl p-3 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Password (Optional)
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Min 6 characters"
                   className="w-full text-xs font-medium bg-slate-50 border border-slate-200 rounded-xl p-3 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
@@ -171,10 +248,17 @@ export const ProviderRegistrationModal: React.FC<ProviderRegistrationModalProps>
               type="submit"
               variant="emerald"
               size="lg"
-              className="w-full h-11 font-bold rounded-xl shadow-md gap-2"
+              disabled={isLoading}
+              className="w-full h-11 font-bold rounded-xl shadow-md gap-2 cursor-pointer"
             >
-              <UserCheck size={16} />
-              <span>Submit Quick Application</span>
+              {isLoading ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  <UserCheck size={16} />
+                  <span>Register Provider Account</span>
+                </>
+              )}
             </Button>
 
             <div className="text-center pt-2">
@@ -183,14 +267,12 @@ export const ProviderRegistrationModal: React.FC<ProviderRegistrationModalProps>
                 onClick={onClose}
                 className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline"
               >
-                Prefer full registration? Complete 5-Step Onboarding →
+                Prefer step-by-step onboarding? Complete KYC & Setup →
               </Link>
             </div>
           </form>
         )}
-
       </div>
     </div>
   );
 };
-
